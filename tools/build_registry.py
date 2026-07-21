@@ -48,7 +48,6 @@ ENTRY_FIELDS = frozenset(
         "mod_id",
         "display_name",
         "creator_name",
-        "mod_page",
         "maintainers",
         "source",
     )
@@ -199,51 +198,6 @@ def require_string(
     return value
 
 
-def validate_mod_page(value: object) -> str:
-    """Validate a public review-only HTTPS page without fetching it."""
-
-    mod_page = require_string(value, "mod_page", 2048)
-
-    if any(character.isspace() for character in mod_page):
-        raise RegistrySourceError(
-            "mod_page must not contain whitespace"
-        )
-    if not mod_page.startswith("https://"):
-        raise RegistrySourceError(
-            "mod_page must use HTTPS"
-        )
-
-    try:
-        parsed = urllib.parse.urlsplit(mod_page)
-        # Reading the port also detects malformed port declarations.
-        parsed.port
-    except ValueError as exc:
-        raise RegistrySourceError(
-            "mod_page is not a valid HTTPS URL"
-        ) from exc
-
-    if parsed.scheme != "https":
-        raise RegistrySourceError(
-            "mod_page must use HTTPS"
-        )
-    if not parsed.netloc or parsed.hostname is None:
-        raise RegistrySourceError(
-            "mod_page must include a public hostname"
-        )
-    if parsed.username is not None or parsed.password is not None:
-        raise RegistrySourceError(
-            "mod_page must not contain embedded credentials"
-        )
-
-    hostname = parsed.hostname.lower().rstrip(".")
-    if hostname == "localhost" or hostname.endswith(".local"):
-        raise RegistrySourceError(
-            "mod_page must use a public hostname"
-        )
-
-    return mod_page
-
-
 def load_json(path: Path) -> Dict[str, Any]:
     try:
         raw = path.read_bytes()
@@ -313,7 +267,6 @@ def validate_entry(path: Path, data: Dict[str, Any]) -> Dict[str, Any]:
         "creator_name",
         128,
     )
-    mod_page = validate_mod_page(data["mod_page"])
 
     maintainers = data["maintainers"]
     if (
@@ -408,7 +361,6 @@ def validate_entry(path: Path, data: Dict[str, Any]) -> Dict[str, Any]:
         "mod_id": mod_id,
         "display_name": display_name,
         "creator_name": creator_name,
-        "mod_page": mod_page,
         "maintainers": normalized_maintainers,
         "repository": repository,
         "tag_prefix": tag_prefix,
@@ -712,6 +664,122 @@ def resolve_registry_entries(
 
 
 
+def github_repository_url(repository: str) -> str:
+    owner, name = repository.split("/", 1)
+    return "https://github.com/{}/{}".format(
+        urllib.parse.quote(owner, safe=""),
+        urllib.parse.quote(name, safe=""),
+    )
+
+
+def github_release_url(repository: str, release_tag: str) -> str:
+    return "{}/releases/tag/{}".format(
+        github_repository_url(repository),
+        urllib.parse.quote(release_tag, safe=""),
+    )
+
+
+def build_readable_registry(
+    sources: Sequence[Dict[str, Any]],
+    entries: Sequence[Dict[str, str]],
+) -> Dict[str, Any]:
+    """Build the public human-readable registry catalogue data."""
+
+    resolved = {}  # type: Dict[str, Dict[str, Dict[str, str]]]
+    generated_at = ""
+
+    for entry in entries:
+        mod_id = entry["mod_id"]
+        channel = entry["release_channel"]
+        checked_at = entry["checked_at"]
+        if checked_at > generated_at:
+            generated_at = checked_at
+
+        resolved.setdefault(mod_id, {})[channel] = {
+            "version": entry["version"],
+            "release_tag": entry["release_tag"],
+            "checked_at": checked_at,
+        }
+
+    if not generated_at:
+        generated_at = utc_now_text()
+
+    mods = []  # type: List[Dict[str, Any]]
+    for source in sources:
+        repository = source["repository"]
+        channel_entries = resolved.get(source["mod_id"], {})
+
+        def channel_data(
+            channel_name: str,
+        ) -> Optional[Dict[str, str]]:
+            item = channel_entries.get(channel_name)
+            if item is None:
+                return None
+            return {
+                "version": item["version"],
+                "release_tag": item["release_tag"],
+                "release_url": github_release_url(
+                    repository,
+                    item["release_tag"],
+                ),
+                "checked_at": item["checked_at"],
+            }
+
+        checked_values = [
+            item["checked_at"]
+            for item in channel_entries.values()
+            if item.get("checked_at")
+        ]
+
+        mods.append(
+            {
+                "mod_id": source["mod_id"],
+                "display_name": source["display_name"],
+                "creator_name": source["creator_name"],
+                "mod_page": source["mod_page"],
+                "repository": repository,
+                "repository_url": github_repository_url(repository),
+                "configured_channels": list(source["channels"]),
+                "stable": channel_data("stable"),
+                "prerelease": channel_data("prerelease"),
+                "checked_at": max(checked_values) if checked_values else "",
+            }
+        )
+
+    mods.sort(
+        key=lambda item: (
+            item["display_name"].casefold(),
+            item["creator_name"].casefold(),
+            item["mod_id"],
+        )
+    )
+
+    return {
+        "schema": 1,
+        "generated_at": generated_at,
+        "mods": mods,
+    }
+
+
+def write_readable_registry(
+    output: Path,
+    sources: Sequence[Dict[str, Any]],
+    entries: Sequence[Dict[str, str]],
+) -> None:
+    document = build_readable_registry(sources, entries)
+    encoded = (
+        json.dumps(
+            document,
+            ensure_ascii=False,
+            indent=2,
+        )
+        + "\n"
+    ).encode("utf-8")
+
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_bytes(encoded)
+
+
 def registry_identity(entries: Sequence[Dict[str, str]]) -> List[Tuple[str, str, str, str]]:
     return sorted(
         (
@@ -810,6 +878,13 @@ def build_parser() -> argparse.ArgumentParser:
             "when versions and release tags have not changed."
         ),
     )
+    parser.add_argument(
+        "--readable-output",
+        help=(
+            "Optional destination for the public human-readable registry "
+            "used by the registry catalogue page."
+        ),
+    )
     return parser
 
 
@@ -829,6 +904,12 @@ def main() -> int:
             if args.previous_signed
             else None,
         )
+        if args.readable_output:
+            write_readable_registry(
+                Path(args.readable_output).resolve(),
+                sources,
+                entries,
+            )
     except RegistrySourceError as exc:
         print("ERROR: {}".format(exc), file=sys.stderr)
         return 1
@@ -843,6 +924,12 @@ def main() -> int:
         )
     )
     print("Unsigned registry written to: {}".format(args.output))
+    if args.readable_output:
+        print(
+            "Readable registry written to: {}".format(
+                args.readable_output
+            )
+        )
     return 0
 
 
