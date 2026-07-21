@@ -17,8 +17,10 @@ You will need:
 - the exact `mod_id` declared in the package;
 - the public GitHub repository containing the mod's published Releases;
 - a public official page describing the mod, such as the creator's website, a public platform listing, or the public GitHub repository presentation page;
-- at least one published, non-draft GitHub Release matching the intended tag prefix and release channel;- release tags that contain a valid semantic version;
+- at least one published, non-draft GitHub Release matching the intended tag prefix and release channel;
+- release tags that contain a valid semantic version;
 - authorization from the creator or maintainer to submit or maintain the registry entry.
+
 Git tags without a published GitHub Release are not sufficient.
 
 ## File location
