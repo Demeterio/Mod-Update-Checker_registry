@@ -99,37 +99,49 @@ MUC does not attempt to bypass firewalls, privacy tools (e.g. ModGuard, Privacy 
 
 If the request is blocked, the registry check simply stops and no additional data is retrieved.
 
-## Signature status
+## Registry signature
 
-Cryptographic registry verification is currently under development.
+Cryptographic registry verification is enabled.
 
-The completed verification system will publish:
+The live file is:
 
-| Element                     | Purpose                                                         |
-| --------------------------- | --------------------------------------------------------------- |
-| Public verification key     | Allows MUC and third parties to verify registry signatures      |
-| Public-key fingerprint      | Identifies the exact public key used by MUC                     |
-| Detached registry signature | Verifies that the generated registry is authentic and unchanged |
+```text
+generated/registry-v1.json
+```
 
-The planned public files are:
+This file is a signed JSON envelope with exactly these fields:
+
+```json
+{
+  "signature_schema": 1,
+  "key_id": "muc-registry-2026-01",
+  "algorithm": "RS256",
+  "payload": "<Base64 canonical registry JSON>",
+  "signature": "<Base64 RSA signature>"
+}
+```
+
+The signature uses RSA PKCS#1 v1.5 with SHA-256 (`RS256`). MUC verifies the signature before decoding and validating any registry entry.
+
+Public verification material is published here:
 
 ```text
 security/muc-registry-public-key.pem
 security/muc-registry-public-key.sha256
-generated/registry-v1.json.sig
 ```
 
-The private signing key will never be published in this repository or included with the mod.
+The private key is stored only as an encrypted GitHub Actions secret. It is never committed, published, included with the mod, or provided to pull-request workflows.
 
-Once signing is enabled, MUC will reject a registry when:
+MUC rejects the registry when:
 
-* its signature is missing;
-* its signature is invalid;
-* its contents were modified after signing;
-* its signature does not match the public key included with MUC;
-* its schema or required fields are invalid.
+* the signed envelope is missing or malformed;
+* the signature schema, key ID, or algorithm is not trusted;
+* the Base64 payload or signature is malformed;
+* the payload was modified after signing;
+* the signature does not match the embedded MUC public key;
+* the inner registry schema or entries are invalid.
 
-> Until cryptographic verification is implemented, the HTTP registry must not be described as tamper-resistant.
+No detached `generated/registry-v1.json.sig` file is used.
 
 ## Contributing a mod entry
 
