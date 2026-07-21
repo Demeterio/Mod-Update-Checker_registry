@@ -2,14 +2,6 @@ name: Validate registry contribution
 
 on:
   pull_request:
-    paths:
-      - "entries/**"
-      - "schemas/mod-entry.schema.json"
-      - "tools/build_registry.py"
-      - "tests/**"
-      - ".github/workflows/validate-registry.yml"
-      - ".github/pull_request_template.md"
-      - ".github/CODEOWNERS"
   workflow_dispatch:
 
 permissions:
