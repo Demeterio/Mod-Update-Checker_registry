@@ -1,3 +1,6 @@
+---
+---
+
 # Mod Update Checker Public Registry
 
 Welcome to the public registry used by **Mod Update Checker for The Sims 4** (or MUC).
@@ -11,6 +14,8 @@ MUC does **not** download, install, import, or execute mod files.
 | Resource            | Link                                                                                                       |
 | ------------------- | ---------------------------------------------------------------------------------------------------------- |
 | Live registry       | [View registry-v1.json](http://muc-registry.demeterio.cc/generated/registry-v1.json)                       |
+| Public verification key | [View public key](http://muc-registry.demeterio.cc/security/muc-registry-public-key.pem)               |
+| Public-key fingerprint | [View fingerprint](http://muc-registry.demeterio.cc/security/muc-registry-public-key.sha256)             |
 | Registry repository | [View on GitHub](https://github.com/Demeterio/Mod-Update-Checker_registry)                                 |
 | Mod repository      | [Mod Update Checker on GitHub](https://github.com/Demeterio/Mod-Update-Checker)                            |
 | Contribution guide  | [Read CONTRIBUTING.md](https://github.com/Demeterio/Mod-Update-Checker_registry/blob/main/CONTRIBUTING.md) |
@@ -41,7 +46,7 @@ The registry does not contain:
 
 ## Live registry document
 
-The current generated registry is available here:
+The current generated and signed registry is available here:
 
 http://muc-registry.demeterio.cc/generated/registry-v1.json
 
@@ -63,17 +68,21 @@ MUC restricts the request to one fixed domain, one fixed port, and one fixed pat
 
 ## Registry signature
 
-Cryptographic registry verification is currently being implemented.
+Cryptographic registry verification is enabled.
 
-The completed system will use:
+The live `generated/registry-v1.json` file is a signed JSON envelope containing:
 
-* a public verification key included with MUC;
-* a published fingerprint for that public key;
-* a signature generated for the registry document.
+* signature schema `1`;
+* trusted key ID `muc-registry-2026-01`;
+* algorithm `RS256`;
+* the canonical registry payload encoded in Base64;
+* an RSA PKCS#1 v1.5 SHA-256 signature encoded in Base64.
 
-Once verification is enabled, MUC will reject a registry when its contents or signature do not match the public key included with the mod.
+MUC verifies the complete payload before parsing or using any registry entry. It rejects missing, malformed, modified, incorrectly signed, or untrusted registry documents.
 
-The private signing key will never be published in this repository.
+The public key and fingerprint are published under `security/`. The private signing key is stored only as an encrypted GitHub Actions secret and is never committed, published, or included with the mod.
+
+No detached `.sig` file is used.
 
 ## Add or update a mod
 
@@ -92,7 +101,7 @@ Do not manually edit generated files unless the contribution guide explicitly in
 
 ## Transparency
 
-The registry source, contribution history, proposed changes, and generated document are publicly visible.
+The registry source, contribution history, proposed changes, generated document, public verification key, and key fingerprint are publicly visible.
 
 MUC performs version comparisons locally and never uses the registry to install or execute mod updates.
 
