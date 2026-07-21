@@ -1,1 +1,20 @@
-
+{
+  "$schema": "../schemas/mod-entry.schema.json",
+  "schema": 1,
+  "mod_id": "moddername.modname.F693BA10FC031D74",
+  "display_name": "Mod Name",
+  "creator_name": "Modder Name",
+  "mod_page": "https://example.com/mod-name",
+  "maintainers": [
+    "ExampleGitHubUser"
+  ],
+  "source": {
+    "type": "github_releases",
+    "repository": "ExampleGitHubUser/ModName",
+    "tag_prefix": "v",
+    "channels": [
+      "stable",
+      "prerelease"
+    ]
+  }
+}
