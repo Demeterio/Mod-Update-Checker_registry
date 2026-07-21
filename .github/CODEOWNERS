@@ -1,6 +1,2 @@
-# Registry source and automation always require maintainer review.
-/entries/ @Demeterio
-/tools/ @Demeterio
-/schemas/ @Demeterio
-/.github/ @Demeterio
-/security/ @Demeterio
+# Every registry change requires maintainer review.
+* @Demeterio
