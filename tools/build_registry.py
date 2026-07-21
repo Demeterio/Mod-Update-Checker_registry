@@ -18,6 +18,7 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 ENTRY_SCHEMA = 1
 REGISTRY_SCHEMA = 1
 MAX_ENTRY_FILES = 10000
+MAX_GENERATED_ENTRIES = 10000
 MAX_RELEASE_PAGES = 10
 RELEASES_PER_PAGE = 100
 REQUEST_TIMEOUT_SECONDS = 20
@@ -683,6 +684,15 @@ def resolve_registry_entries(
                     "checked_at": checked_at,
                 }
             )
+
+            if len(generated) > MAX_GENERATED_ENTRIES:
+                raise RegistrySourceError(
+                    "Generated registry contains more than "
+                    "{} channel entries".format(
+                        MAX_GENERATED_ENTRIES
+                    )
+                )
+
             found_any = True
 
         if not found_any:
