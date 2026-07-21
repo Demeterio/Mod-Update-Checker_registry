@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+  schedule:
+    - cron: "17 6 * * *"
   workflow_dispatch:
 
 permissions:
@@ -40,6 +42,18 @@ jobs:
             exit 1
           fi
 
+      - name: Run registry builder tests
+        run: python3 -m unittest discover -s tests -v
+
+      - name: Resolve reviewed GitHub Releases
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          python3 tools/build_registry.py \
+            --entries entries \
+            --output "$RUNNER_TEMP/registry-v1.unsigned.json" \
+            --previous-signed generated/registry-v1.json
+
       - name: Restore private signing key
         shell: bash
         env:
@@ -55,7 +69,7 @@ jobs:
           private_key="$RUNNER_TEMP/muc-registry-private-key.pem"
           printf '%s' "$PRIVATE_KEY_B64" |
             base64 --decode > "$private_key"
-          chmod 600 "$private_key"
+          chmod 0600 "$private_key"
 
           openssl pkey \
             -in "$private_key" \
@@ -65,7 +79,7 @@ jobs:
       - name: Validate, sign, and verify registry
         run: |
           python3 tools/build_and_sign_registry.py sign \
-            --source source/registry-v1.json \
+            --source "$RUNNER_TEMP/registry-v1.unsigned.json" \
             --private-key "$RUNNER_TEMP/muc-registry-private-key.pem" \
             --public-key security/muc-registry-public-key.pem \
             --fingerprint security/muc-registry-public-key.sha256 \
