@@ -1,13 +1,5 @@
 {
   "schema": 1,
   "generated_at": "2026-07-21T04:25:00Z",
-  "entries": [
-    {
-      "mod_id": "demeterio.modupdatechecker.9B46A71DF50A892B",
-      "release_channel": "stable",
-      "version": "1.0.0",
-      "release_tag": "v1.0.0",
-      "checked_at": "2026-07-21T07:53:00Z"
-    }
-  ]
+  "entries": []
 }
