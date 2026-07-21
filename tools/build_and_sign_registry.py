@@ -294,6 +294,11 @@ def write_atomic(path: Path, content: bytes) -> None:
             stream.flush()
             os.fsync(stream.fileno())
         os.replace(str(temporary), str(path))
+
+        # The generated registry is a public GitHub Pages file.
+        # tempfile.mkstemp() creates files with private permissions (0600),
+        # so explicitly make the final file readable by the Pages build.
+        os.chmod(str(path), 0o644)
     finally:
         try:
             temporary.unlink()
