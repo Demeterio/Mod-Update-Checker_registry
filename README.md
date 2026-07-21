@@ -145,19 +145,20 @@ No detached `generated/registry-v1.json.sig` file is used.
 
 ## Contributing a mod entry
 
-Registry changes will be submitted through GitHub Pull Requests.
+Registry changes are submitted through GitHub Pull Requests.
 
-The public contribution system will include:
+The public contribution system includes:
 
 ```text
 CONTRIBUTING.md
+entries/
 templates/mod-entry.template.json
 schemas/mod-entry.schema.json
 examples/
 .github/pull_request_template.md
 ```
 
-These resources will explain:
+These resources explain:
 
 * how to create a registry entry;
 * which fields are required;
@@ -166,7 +167,7 @@ These resources will explain:
 * how to submit a Pull Request;
 * how an existing entry can be updated.
 
-Once public submissions are open, contributors will be able to:
+Contributors can:
 
 1. read the contribution guide;
 2. copy the JSON entry template;
@@ -174,12 +175,14 @@ Once public submissions are open, contributors will be able to:
 4. review the example entries;
 5. fork the repository;
 6. create a branch for the entry;
-7. commit the completed JSON file;
-8. open a Pull Request.
+7. add the completed JSON file under `entries/`;
+8. commit the entry;
+9. open a Pull Request against `main`.
 
 Proposed changes can be reviewed publicly on the [Pull Requests page](https://github.com/Demeterio/Mod-Update-Checker_registry/pulls).
 
-All submissions must pass automated schema and content validation before they can be merged.
+All submissions must pass automated schema and content validation before they can be merged. Passing automated validation does not guarantee acceptance; registry entries also require maintainer review.
+
 
 ## Generated files
 
