@@ -8,4 +8,3 @@ exclude:
   - CONTRIBUTING.md
   - templates
   - examples
-  - schemas
