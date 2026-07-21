@@ -1,4 +1,4 @@
-# Mod Update Checker Public Registry0
+# Mod Update Checker Public Registry
 
 Welcome to the public registry used by **Mod Update Checker for The Sims 4** (or MUC).
 
