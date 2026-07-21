@@ -15,6 +15,12 @@ jobs:
       - name: Checkout Pull Request
         uses: actions/checkout@v6
 
+      - name: Compile Python tools
+        run: |
+          python3 -m py_compile \
+            tools/build_registry.py \
+            tools/build_and_sign_registry.py
+
       - name: Run unit tests
         run: python3 -m unittest discover -s tests -v
 
@@ -26,6 +32,55 @@ jobs:
             --entries entries \
             --output "$RUNNER_TEMP/registry-v1.unsigned.json"
 
+      - name: Validate unsigned registry with signing validator
+        run: |
+          python3 tools/build_and_sign_registry.py validate \
+            --source "$RUNNER_TEMP/registry-v1.unsigned.json"
+
+      - name: Test registry signing with an ephemeral key
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          private_key="$RUNNER_TEMP/muc-test-private-key.pem"
+          public_key="$RUNNER_TEMP/muc-test-public-key.pem"
+          fingerprint="$RUNNER_TEMP/muc-test-public-key.sha256"
+          signed_registry="$RUNNER_TEMP/registry-v1.signed.json"
+
+          openssl genpkey \
+            -algorithm RSA \
+            -pkeyopt rsa_keygen_bits:3072 \
+            -out "$private_key"
+
+          openssl pkey \
+            -in "$private_key" \
+            -pubout \
+            -out "$public_key"
+
+          openssl pkey \
+            -pubin \
+            -in "$public_key" \
+            -outform DER |
+            sha256sum |
+            awk '{print $1}' > "$fingerprint"
+
+          python3 tools/build_and_sign_registry.py sign \
+            --source "$RUNNER_TEMP/registry-v1.unsigned.json" \
+            --private-key "$private_key" \
+            --public-key "$public_key" \
+            --fingerprint "$fingerprint" \
+            --output "$signed_registry" \
+            --key-id muc-registry-test-only
+
+          python3 -m json.tool "$signed_registry"
+
+          rm -f \
+            "$private_key" \
+            "$public_key" \
+            "$fingerprint" \
+            "$signed_registry"
+
       - name: Display generated unsigned registry
         run: |
-          python3 -m json.tool "$RUNNER_TEMP/registry-v1.unsigned.json"
+          python3 -m json.tool \
+            "$RUNNER_TEMP/registry-v1.unsigned.json"
