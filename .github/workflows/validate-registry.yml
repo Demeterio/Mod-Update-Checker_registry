@@ -30,7 +30,8 @@ jobs:
         run: |
           python3 tools/build_registry.py \
             --entries entries \
-            --output "$RUNNER_TEMP/registry-v1.unsigned.json"
+            --output "$RUNNER_TEMP/registry-v1.unsigned.json" \
+            --readable-output "$RUNNER_TEMP/registry-v1-readable.json"
 
       - name: Validate unsigned registry with signing validator
         run: |
@@ -80,7 +81,10 @@ jobs:
             "$fingerprint" \
             "$signed_registry"
 
-      - name: Display generated unsigned registry
+      - name: Display generated registries
         run: |
           python3 -m json.tool \
             "$RUNNER_TEMP/registry-v1.unsigned.json"
+
+          python3 -m json.tool \
+            "$RUNNER_TEMP/registry-v1-readable.json"
