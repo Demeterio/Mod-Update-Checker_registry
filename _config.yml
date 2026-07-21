@@ -1,6 +1,8 @@
 exclude:
+  - entries
   - source
   - tools
+  - tests
   - .github
   - README.md
   - CONTRIBUTING.md
