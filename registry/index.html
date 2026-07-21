@@ -8,7 +8,7 @@ permalink: /registry/
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Human-readable Mod Update Checker registry for The Sims 4.">
-  <title>Mod Update Checker Registry</title>
+  <title>Demeterio — Mod Update Checker Registry</title>
   <style>
     :root {
       color-scheme: light dark;
@@ -203,6 +203,12 @@ permalink: /registry/
       color: var(--muted);
       font-size: .86rem;
     }
+    .footer-links {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
     @media (max-width: 850px) {
       .stats { grid-template-columns: repeat(2, 1fr); }
       .controls { grid-template-columns: 1fr; }
@@ -215,8 +221,8 @@ permalink: /registry/
 </head>
 <body>
   <main class="page">
-    <span class="eyebrow">The Sims 4 · Mod Update Checker</span>
-    <h1>Public mod registry</h1>
+    <span class="eyebrow">The Sims 4 · Mod Update Checker (MUC) · Demeterio</span>
+    <h1>Mod Update Checker Registry by Demeterio</h1>
     <p class="intro">
       Browse registered mods, official pages, and the latest stable and
       prerelease versions detected from their public GitHub Releases.
@@ -270,7 +276,32 @@ permalink: /registry/
 
     <footer>
       <span id="visible">Loading…</span>
-      <a href="../generated/registry-v1-readable.json">View readable JSON</a>
+    
+      <span class="footer-links">
+        <a href="../generated/registry-v1-readable.json">
+          View readable JSON
+        </a>
+    
+        <span aria-hidden="true">·</span>
+    
+        <a
+          href="https://demeterio.tumblr.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Demeterio on Tumblr
+        </a>
+    
+        <span aria-hidden="true">·</span>
+    
+        <a
+          href="https://github.com/Demeterio"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Demeterio on GitHub
+        </a>
+      </span>
     </footer>
   </main>
 
