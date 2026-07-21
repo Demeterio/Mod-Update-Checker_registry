@@ -4,15 +4,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - "source/registry-v1.json"
-      - "tools/build_and_sign_registry.py"
-      - "security/muc-registry-public-key.pem"
-      - "security/muc-registry-public-key.sha256"
-      - ".github/workflows/publish-signed-registry.yml"
-      - "index.md"
-      - "_config.yml"
-      - "CNAME"
   workflow_dispatch:
 
 permissions:
