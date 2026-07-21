@@ -1,1 +1,104 @@
-
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://muc-registry.demeterio.cc/schemas/mod-entry.schema.json",
+  "title": "Mod Update Checker registry source entry",
+  "description": "Configuration used by the registry workflow to resolve public GitHub Releases.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema",
+    "mod_id",
+    "display_name",
+    "creator_name",
+    "mod_page",
+    "maintainers",
+    "source"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "const": "../schemas/mod-entry.schema.json"
+    },
+    "schema": {
+      "type": "integer",
+      "const": 1
+    },
+    "mod_id": {
+      "type": "string",
+      "minLength": 20,
+      "maxLength": 128,
+      "pattern": "^[a-z0-9_-]+\\.[a-z0-9_-]+\\.[0-9A-F]{16}$"
+    },
+    "display_name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "creator_name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "mod_page": {
+      "type": "string",
+      "minLength": 9,
+      "maxLength": 2048,
+      "format": "uri",
+      "pattern": "^https://\\S+$",
+      "description": "Public official page describing the mod. Used only for review and documentation; never included in the generated player registry."
+    },
+    "maintainers": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 20,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 39,
+        "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$"
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "repository",
+        "tag_prefix",
+        "channels"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "github_releases"
+        },
+        "repository": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 201,
+          "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+        },
+        "tag_prefix": {
+          "type": "string",
+          "maxLength": 96,
+          "pattern": "^[A-Za-z0-9._/+\\-]*$"
+        },
+        "channels": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "stable",
+              "prerelease"
+            ]
+          }
+        }
+      }
+    }
+  }
+}
