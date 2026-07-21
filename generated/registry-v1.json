@@ -1,13 +1,13 @@
 {
   "schema": 1,
-  "generated_at": "2026-07-21T04:05:00Z",
+  "generated_at": "2026-07-21T04:25:00Z",
   "entries": [
     {
       "mod_id": "demeterio.modupdatechecker.9B46A71DF50A892B",
-      "release_channel": "stable",
-      "version": "2.0.0",
-      "release_tag": "v2.0.0",
-      "checked_at": "2026-07-21T04:05:00Z"
+      "release_channel": "prerelease",
+      "version": "1.1.0-beta.1",
+      "release_tag": "v1.1.0-beta.1",
+      "checked_at": "2026-07-21T04:25:00Z"
     }
   ]
 }
