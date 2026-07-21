@@ -66,7 +66,7 @@ This is a technical compatibility decision, not an attempt to hide the connectio
 
 HTTP does not provide transport encryption or built-in response authentication. The registry contains only public version information, but its authenticity still needs to be verified.
 
-For that reason, MUC is being designed to verify a cryptographic signature before using a retrieved registry document.
+For that reason, MUC verifies a cryptographic signature before using a retrieved registry document.
 
 ## Network restrictions
 
@@ -190,12 +190,6 @@ generated/registry-v1.json
 ```
 
 It should not be edited manually.
-
-Once cryptographic signing is enabled, the following file will also be generated automatically:
-
-```text
-generated/registry-v1.json.sig
-```
 
 ## Registry format
 
