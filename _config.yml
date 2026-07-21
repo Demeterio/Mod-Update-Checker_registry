@@ -1,0 +1,9 @@
+exclude:
+  - source
+  - tools
+  - .github
+  - README.md
+  - CONTRIBUTING.md
+  - templates
+  - examples
+  - schemas
