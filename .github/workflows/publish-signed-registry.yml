@@ -87,6 +87,14 @@ jobs:
         run: |
           rm -f "$RUNNER_TEMP/muc-registry-private-key.pem"
 
+      - name: Prepare public registry permissions
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod 0644 generated/registry-v1.json
+          test -r generated/registry-v1.json
+          ls -l generated/registry-v1.json
+
       - name: Commit generated signed registry
         shell: bash
         run: |
