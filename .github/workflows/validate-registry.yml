@@ -1,0 +1,57 @@
+name: Validate registry source
+
+on:
+  pull_request:
+    paths:
+      - "source/registry-v1.json"
+      - "tools/build_and_sign_registry.py"
+      - "security/muc-registry-public-key.pem"
+      - "security/muc-registry-public-key.sha256"
+      - ".github/workflows/validate-registry.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Validate unsigned registry source
+        run: >
+          python3 tools/build_and_sign_registry.py validate
+          --source source/registry-v1.json
+
+      - name: Verify committed public-key fingerprint
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          expected="$(
+            tr -d '[:space:]' < security/muc-registry-public-key.sha256 |
+            tr '[:upper:]' '[:lower:]'
+          )"
+          actual="$(
+            openssl pkey \
+              -pubin \
+              -in security/muc-registry-public-key.pem \
+              -outform DER |
+            sha256sum |
+            awk '{print $1}'
+          )"
+
+          if [[ ! "$expected" =~ ^[0-9a-f]{64}$ ]]; then
+            echo "The committed fingerprint file is invalid." >&2
+            exit 1
+          fi
+
+          if [[ "$actual" != "$expected" ]]; then
+            echo "The committed public key does not match its fingerprint." >&2
+            exit 1
+          fi
+
+          echo "Public-key fingerprint verified: $actual"
