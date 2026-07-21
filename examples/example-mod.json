@@ -1,20 +1,19 @@
 {
   "$schema": "../schemas/mod-entry.schema.json",
   "schema": 1,
-  "mod_id": "moddername.modname.F693BA10FC031D74",
-  "display_name": "Mod Name",
-  "creator_name": "Modder Name",
-  "mod_page": "https://example.com/mod-name",
+  "mod_id": "demeterio.modupdatechecker.9B46A71DF50A892B",
+  "display_name": "Mod Update Checker",
+  "creator_name": "Demeterio",
+  "mod_page": "https://github.com/Demeterio/Mod-Update-Checker/blob/main/README.md",
   "maintainers": [
-    "ExampleGitHubUser"
+    "Demeterio"
   ],
   "source": {
     "type": "github_releases",
-    "repository": "ExampleGitHubUser/ModName",
+    "repository": "Demeterio/Mod-Update-Checker",
     "tag_prefix": "v",
     "channels": [
-      "stable",
-      "prerelease"
+      "stable"
     ]
   }
 }
