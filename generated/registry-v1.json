@@ -1,5 +1,7 @@
 {
-  "schema": 1,
-  "generated_at": "2026-07-21T04:25:00Z",
-  "entries": []
+  "signature_schema": 1,
+  "key_id": "muc-registry-2026-01",
+  "algorithm": "RS256",
+  "payload": "eyJzY2hlbWEiOjEsImdlbmVyYXRlZF9hdCI6IjIwMjYtMDctMjFUMDc6Mjc6MTBaIiwiZW50cmllcyI6W119",
+  "signature": "FWsUy6WGJHPDvOb8832vzto5L079PupOUFXFO1pc68ET+Kl0BQQ1nfNcq7NdTJJMjI8aBstmtmaKGVLCjkb0/OLJMAXrA9cnV8ehD5nJXe7XPBZOBiZdahFTqp3FajTP5tX3NRPjQx9He5Uc9FnKwrFurO2btTnHAjjnK9ZZ+w8twi4esHu+IyNavzWkedelNg4tj44JJnSvXFVMsyYHppF1FT6kGxIwEqwXUJWicmJ40a0xZ2J8LBte6uwd4qbQn9VL4FTik6bnZKCkUQx2/KIlB83G0rs+zXkqJ0J8RSi7KFKjzBKigSl/nH3dCUwRBIfXvR4/d6CELPnv6KMQbTQ9ukuSvANaF0oEeWf9waxREhzQBB+wROjcKK77s57GvpQUPrHJyoqqgi82xkBBEg9cedsGpwTCN9+x71M63VDRqZ3Oli06wa+MLaVw0r7KkUYrQemlH1k94bJ7hQLFb7xttrndwuPVjkNRHQ4RYJxV7RLmjzoKCyVVwqWV9m/8"
 }
