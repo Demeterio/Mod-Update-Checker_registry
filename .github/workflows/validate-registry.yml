@@ -1,13 +1,15 @@
-name: Validate registry source
+name: Validate registry contribution
 
 on:
   pull_request:
     paths:
-      - "source/registry-v1.json"
-      - "tools/build_and_sign_registry.py"
-      - "security/muc-registry-public-key.pem"
-      - "security/muc-registry-public-key.sha256"
+      - "entries/**"
+      - "schemas/mod-entry.schema.json"
+      - "tools/build_registry.py"
+      - "tests/**"
       - ".github/workflows/validate-registry.yml"
+      - ".github/pull_request_template.md"
+      - ".github/CODEOWNERS"
   workflow_dispatch:
 
 permissions:
@@ -18,40 +20,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout Pull Request
         uses: actions/checkout@v6
 
-      - name: Validate unsigned registry source
-        run: >
-          python3 tools/build_and_sign_registry.py validate
-          --source source/registry-v1.json
+      - name: Run unit tests
+        run: python3 -m unittest discover -s tests -v
 
-      - name: Verify committed public-key fingerprint
-        shell: bash
+      - name: Validate entries and resolve public GitHub Releases
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
-          set -euo pipefail
+          python3 tools/build_registry.py \
+            --entries entries \
+            --output "$RUNNER_TEMP/registry-v1.unsigned.json"
 
-          expected="$(
-            tr -d '[:space:]' < security/muc-registry-public-key.sha256 |
-            tr '[:upper:]' '[:lower:]'
-          )"
-          actual="$(
-            openssl pkey \
-              -pubin \
-              -in security/muc-registry-public-key.pem \
-              -outform DER |
-            sha256sum |
-            awk '{print $1}'
-          )"
-
-          if [[ ! "$expected" =~ ^[0-9a-f]{64}$ ]]; then
-            echo "The committed fingerprint file is invalid." >&2
-            exit 1
-          fi
-
-          if [[ "$actual" != "$expected" ]]; then
-            echo "The committed public key does not match its fingerprint." >&2
-            exit 1
-          fi
-
-          echo "Public-key fingerprint verified: $actual"
+      - name: Display generated unsigned registry
+        run: |
+          python3 -m json.tool "$RUNNER_TEMP/registry-v1.unsigned.json"
