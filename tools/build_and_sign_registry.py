@@ -331,7 +331,9 @@ def sign_registry(args: argparse.Namespace) -> None:
         )
 
     data = load_registry(source)
-    payload = canonical_payload(data, refresh_timestamp=True)
+    # build_registry.py assigns a new generated_at value only when
+    # the resolved versions or release tags have changed.
+    payload = canonical_payload(data, refresh_timestamp=False)
 
     with tempfile.TemporaryDirectory(prefix="muc-registry-sign-") as directory:
         temporary = Path(directory)
