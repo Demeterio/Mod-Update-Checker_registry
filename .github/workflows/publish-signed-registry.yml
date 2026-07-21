@@ -51,7 +51,8 @@ jobs:
         run: |
           python3 tools/build_registry.py \
             --entries entries \
-            --output "$RUNNER_TEMP/registry-v1.unsigned.json"
+            --output "$RUNNER_TEMP/registry-v1.unsigned.json" \
+            --readable-output generated/registry-v1-readable.json
 
       - name: Restore private signing key
         shell: bash
@@ -91,13 +92,24 @@ jobs:
         run: |
           rm -f "$RUNNER_TEMP/muc-registry-private-key.pem"
 
-      - name: Prepare public registry permissions
+      - name: Prepare public registry files
         shell: bash
         run: |
           set -euo pipefail
-          chmod 0644 generated/registry-v1.json
+
+          chmod 0644 \
+            generated/registry-v1.json \
+            generated/registry-v1-readable.json
+
           test -r generated/registry-v1.json
-          ls -l generated/registry-v1.json
+          test -r generated/registry-v1-readable.json
+
+          python3 -m json.tool \
+            generated/registry-v1-readable.json > /dev/null
+
+          ls -l \
+            generated/registry-v1.json \
+            generated/registry-v1-readable.json
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
