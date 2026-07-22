@@ -268,6 +268,8 @@ The complete Python source code of Mod Update Checker is also publicly available
 
 MUC performs version comparisons locally and never uses the registry to download, install, import, or execute mod files.
 
+Like any network request, the registry host and normal network infrastructure may receive ordinary connection metadata such as the player's IP address, request time, and the fixed MUC User-Agent. MUC does not transmit EA account data, installed mod IDs, installed versions, save data, or gameplay information.
+
 ## Disclaimer
 
 Mod Update Checker is an unofficial fan-made project.
