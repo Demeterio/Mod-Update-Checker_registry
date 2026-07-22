@@ -10,8 +10,6 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: muc-registry-pages
@@ -23,7 +21,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
 
@@ -42,7 +40,13 @@ jobs:
             exit 1
           fi
 
-      - name: Run registry builder tests
+      - name: Compile Python tools
+        run: |
+          python3 -m py_compile \
+            tools/build_registry.py \
+            tools/build_and_sign_registry.py
+
+      - name: Run registry tests
         run: python3 -m unittest discover -s tests -v
 
       - name: Resolve reviewed GitHub Releases
@@ -53,6 +57,11 @@ jobs:
             --entries entries \
             --output "$RUNNER_TEMP/registry-v1.unsigned.json" \
             --readable-output generated/registry-v1-readable.json
+
+      - name: Validate unsigned registry
+        run: |
+          python3 tools/build_and_sign_registry.py validate \
+            --source "$RUNNER_TEMP/registry-v1.unsigned.json"
 
       - name: Restore private signing key
         shell: bash
@@ -76,7 +85,7 @@ jobs:
             -check \
             -noout
 
-      - name: Validate, sign, and verify registry
+      - name: Sign registry
         run: |
           python3 tools/build_and_sign_registry.py sign \
             --source "$RUNNER_TEMP/registry-v1.unsigned.json" \
@@ -84,6 +93,14 @@ jobs:
             --public-key security/muc-registry-public-key.pem \
             --fingerprint security/muc-registry-public-key.sha256 \
             --output generated/registry-v1.json \
+            --key-id muc-registry-2026-01
+
+      - name: Independently verify signed registry
+        run: |
+          python3 tools/build_and_sign_registry.py verify \
+            --source generated/registry-v1.json \
+            --public-key security/muc-registry-public-key.pem \
+            --fingerprint security/muc-registry-public-key.sha256 \
             --key-id muc-registry-2026-01
 
       - name: Remove private signing key
@@ -105,6 +122,8 @@ jobs:
           test -r generated/registry-v1-readable.json
 
           python3 -m json.tool \
+            generated/registry-v1.json > /dev/null
+          python3 -m json.tool \
             generated/registry-v1-readable.json > /dev/null
 
           ls -l \
@@ -112,16 +131,16 @@ jobs:
             generated/registry-v1-readable.json
 
       - name: Configure GitHub Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0
 
       - name: Build site with Jekyll
-        uses: actions/jekyll-build-pages@v1
+        uses: actions/jekyll-build-pages@44a6e6beabd48582f863aeeb6cb2151cc1716697 # v1.0.13
         with:
           source: ./
           destination: ./_site
 
       - name: Upload GitHub Pages artifact
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4.0.0
         with:
           path: ./_site
 
@@ -134,10 +153,11 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
 
     permissions:
+      contents: read
       pages: write
       id-token: write
 
     steps:
       - name: Deploy GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5

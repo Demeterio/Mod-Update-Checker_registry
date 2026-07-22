@@ -13,7 +13,7 @@ jobs:
 
     steps:
       - name: Checkout Pull Request
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Compile Python tools
         run: |
@@ -38,7 +38,7 @@ jobs:
           python3 tools/build_and_sign_registry.py validate \
             --source "$RUNNER_TEMP/registry-v1.unsigned.json"
 
-      - name: Test registry signing with an ephemeral key
+      - name: Test signing and independent verification with an ephemeral key
         shell: bash
         run: |
           set -euo pipefail
@@ -47,6 +47,7 @@ jobs:
           public_key="$RUNNER_TEMP/muc-test-public-key.pem"
           fingerprint="$RUNNER_TEMP/muc-test-public-key.sha256"
           signed_registry="$RUNNER_TEMP/registry-v1.signed.json"
+          key_id="muc-registry-test-only"
 
           openssl genpkey \
             -algorithm RSA \
@@ -71,9 +72,15 @@ jobs:
             --public-key "$public_key" \
             --fingerprint "$fingerprint" \
             --output "$signed_registry" \
-            --key-id muc-registry-test-only
+            --key-id "$key_id"
 
-          python3 -m json.tool "$signed_registry"
+          python3 tools/build_and_sign_registry.py verify \
+            --source "$signed_registry" \
+            --public-key "$public_key" \
+            --fingerprint "$fingerprint" \
+            --key-id "$key_id"
+
+          python3 -m json.tool "$signed_registry" > /dev/null
 
           rm -f \
             "$private_key" \
