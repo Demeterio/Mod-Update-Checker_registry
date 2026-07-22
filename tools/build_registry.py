@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
-"""Build the unsigned MUC registry from reviewed public GitHub Release sources."""
+"""Build a fresh unsigned MUC registry from reviewed GitHub Release sources."""
 
 import argparse
-import base64
 import json
 import os
 import re
@@ -13,7 +12,7 @@ import urllib.request
 from datetime import datetime, timezone
 from functools import total_ordering
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 ENTRY_SCHEMA = 1
 REGISTRY_SCHEMA = 1
@@ -24,38 +23,28 @@ RELEASES_PER_PAGE = 100
 REQUEST_TIMEOUT_SECONDS = 20
 GITHUB_API_VERSION = "2026-03-10"
 
-MOD_ID_PATTERN = re.compile(
-    r"^[a-z0-9_-]+\.[a-z0-9_-]+\.[0-9A-F]{16}$"
-)
+MOD_ID_PATTERN = re.compile(r"^[a-z0-9_-]+\.[a-z0-9_-]+\.[0-9A-F]{16}$")
 REPOSITORY_PATTERN = re.compile(
-    r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+    r"^[A-Za-z0-9](?:[A-Za-z0-9_.-]{0,98}[A-Za-z0-9])?/"
+    r"[A-Za-z0-9](?:[A-Za-z0-9_.-]{0,98}[A-Za-z0-9])?$"
 )
 GITHUB_LOGIN_PATTERN = re.compile(
-    r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$"
+    r"^[a-z0-9](?:[a-z0-9-]{0,37}[a-z0-9])?$"
 )
-TAG_PREFIX_PATTERN = re.compile(r"^[A-Za-z0-9._/+\-]*$")
+TAG_PREFIX_PATTERN = re.compile(
+    r"^(?:[A-Za-z0-9][A-Za-z0-9._/+\-]{0,95})?$"
+)
 SEMVER_PATTERN = re.compile(
     r"^(0|[1-9][0-9]*)\."
     r"(0|[1-9][0-9]*)\."
     r"(0|[1-9][0-9]*)"
     r"(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?"
-    r"(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$"
+    r"(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$"
 )
 ENTRY_FIELDS = frozenset(
-    (
-        "$schema",
-        "schema",
-        "mod_id",
-        "display_name",
-        "creator_name",
-        "mod_page",
-        "maintainers",
-        "source",
-    )
+    ("$schema", "schema", "mod_id", "display_name", "creator_name", "mod_page", "maintainers", "source")
 )
-SOURCE_FIELDS = frozenset(
-    ("type", "repository", "tag_prefix", "channels")
-)
+SOURCE_FIELDS = frozenset(("type", "repository", "tag_prefix", "channels"))
 CHANNELS = frozenset(("stable", "prerelease"))
 
 
@@ -67,14 +56,7 @@ class RegistrySourceError(Exception):
 class SemVer:
     __slots__ = ("major", "minor", "patch", "prerelease", "text")
 
-    def __init__(
-        self,
-        major: int,
-        minor: int,
-        patch: int,
-        prerelease: Tuple[object, ...],
-        text: str,
-    ) -> None:
+    def __init__(self, major, minor, patch, prerelease, text):
         self.major = major
         self.minor = minor
         self.patch = patch
@@ -83,60 +65,42 @@ class SemVer:
 
     @classmethod
     def parse(cls, text: str) -> "SemVer":
+        if not isinstance(text, str) or text != text.strip():
+            raise RegistrySourceError("Version must be an exact string")
         match = SEMVER_PATTERN.fullmatch(text)
         if match is None:
-            raise RegistrySourceError(
-                "Version is not valid SemVer: {}".format(text)
-            )
-        prerelease_text = match.group(4)
-        prerelease = []  # type: List[object]
-        if prerelease_text:
-            for identifier in prerelease_text.split("."):
+            raise RegistrySourceError("Version is not valid SemVer: {}".format(text))
+        prerelease = []
+        if match.group(4):
+            for identifier in match.group(4).split("."):
                 if identifier.isdigit():
                     if len(identifier) > 1 and identifier.startswith("0"):
                         raise RegistrySourceError(
-                            "Numeric prerelease identifiers must not contain "
-                            "leading zeroes: {}".format(text)
+                            "Numeric prerelease identifiers must not contain leading zeroes: {}".format(text)
                         )
                     prerelease.append(int(identifier))
                 else:
                     prerelease.append(identifier)
-        return cls(
-            int(match.group(1)),
-            int(match.group(2)),
-            int(match.group(3)),
-            tuple(prerelease),
-            text,
-        )
+        return cls(int(match.group(1)), int(match.group(2)), int(match.group(3)), tuple(prerelease), text)
 
-    def __eq__(self, other: object) -> bool:
+    def __eq__(self, other):
         if not isinstance(other, SemVer):
             return NotImplemented
-        return (
-            self.major,
-            self.minor,
-            self.patch,
-            self.prerelease,
-        ) == (
-            other.major,
-            other.minor,
-            other.patch,
-            other.prerelease,
+        return (self.major, self.minor, self.patch, self.prerelease) == (
+            other.major, other.minor, other.patch, other.prerelease
         )
 
-    def __lt__(self, other: object) -> bool:
+    def __lt__(self, other):
         if not isinstance(other, SemVer):
             return NotImplemented
-        core_self = (self.major, self.minor, self.patch)
-        core_other = (other.major, other.minor, other.patch)
-        if core_self != core_other:
-            return core_self < core_other
-
+        left_core = (self.major, self.minor, self.patch)
+        right_core = (other.major, other.minor, other.patch)
+        if left_core != right_core:
+            return left_core < right_core
         if not self.prerelease:
-            return False if not other.prerelease else False
+            return False
         if not other.prerelease:
             return True
-
         for left, right in zip(self.prerelease, other.prerelease):
             if left == right:
                 continue
@@ -151,297 +115,168 @@ class SemVer:
 
 
 def utc_now_text() -> str:
-    return (
-        datetime.now(timezone.utc)
-        .replace(microsecond=0)
-        .isoformat()
-        .replace("+00:00", "Z")
-    )
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
-def reject_duplicate_keys(
-    pairs: List[Tuple[str, Any]],
-) -> Dict[str, Any]:
-    result = {}  # type: Dict[str, Any]
+def reject_duplicate_keys(pairs):
+    result = {}
     for key, value in pairs:
         if key in result:
-            raise RegistrySourceError(
-                "JSON contains duplicate key: {}".format(key)
-            )
+            raise RegistrySourceError("JSON contains duplicate key: {}".format(key))
         result[key] = value
     return result
 
 
-def require_string(
-    value: object,
-    field_name: str,
-    maximum: int,
-    allow_empty: bool = False,
-) -> str:
+def require_string(value, field_name, maximum, allow_empty=False):
     if not isinstance(value, str):
-        raise RegistrySourceError(
-            "{} must be a string".format(field_name)
-        )
+        raise RegistrySourceError("{} must be a string".format(field_name))
     if value != value.strip():
         raise RegistrySourceError(
-            "{} must not contain leading or trailing whitespace".format(
-                field_name
-            )
+            "{} must not contain leading or trailing whitespace".format(field_name)
         )
     if not value and not allow_empty:
-        raise RegistrySourceError(
-            "{} must not be empty".format(field_name)
-        )
+        raise RegistrySourceError("{} must not be empty".format(field_name))
     if len(value) > maximum:
-        raise RegistrySourceError(
-            "{} is too long".format(field_name)
-        )
+        raise RegistrySourceError("{} is too long".format(field_name))
+    if any(ord(character) < 32 or ord(character) == 127 for character in value):
+        raise RegistrySourceError("{} must not contain control characters".format(field_name))
     return value
 
 
-def validate_mod_page(value: object) -> str:
-    """Validate a public HTTPS page used by the readable catalogue."""
-
+def validate_mod_page(value):
     mod_page = require_string(value, "mod_page", 2048)
-
     if any(character.isspace() for character in mod_page):
-        raise RegistrySourceError(
-            "mod_page must not contain whitespace"
-        )
-    if not mod_page.startswith("https://"):
-        raise RegistrySourceError(
-            "mod_page must use HTTPS"
-        )
-
+        raise RegistrySourceError("mod_page must not contain whitespace")
     try:
         parsed = urllib.parse.urlsplit(mod_page)
-        # Reading the port also detects malformed port declarations.
         parsed.port
     except ValueError as exc:
-        raise RegistrySourceError(
-            "mod_page is not a valid HTTPS URL"
-        ) from exc
-
-    if parsed.scheme != "https":
-        raise RegistrySourceError(
-            "mod_page must use HTTPS"
-        )
-    if not parsed.netloc or parsed.hostname is None:
-        raise RegistrySourceError(
-            "mod_page must include a public hostname"
-        )
+        raise RegistrySourceError("mod_page is not a valid HTTPS URL") from exc
+    if parsed.scheme != "https" or not parsed.netloc or parsed.hostname is None:
+        raise RegistrySourceError("mod_page must use HTTPS and include a public hostname")
     if parsed.username is not None or parsed.password is not None:
-        raise RegistrySourceError(
-            "mod_page must not contain embedded credentials"
-        )
-
+        raise RegistrySourceError("mod_page must not contain embedded credentials")
     hostname = parsed.hostname.lower().rstrip(".")
     if hostname == "localhost" or hostname.endswith(".local"):
-        raise RegistrySourceError(
-            "mod_page must use a public hostname"
-        )
-
+        raise RegistrySourceError("mod_page must use a public hostname")
     return mod_page
 
 
-def load_json(path: Path) -> Dict[str, Any]:
+def load_json(path: Path):
     try:
         raw = path.read_bytes()
     except OSError as exc:
-        raise RegistrySourceError(
-            "Unable to read {}".format(path)
-        ) from exc
+        raise RegistrySourceError("Unable to read {}".format(path)) from exc
     if not raw:
-        raise RegistrySourceError(
-            "{} must not be empty".format(path)
-        )
+        raise RegistrySourceError("{} must not be empty".format(path))
     if raw.startswith(b"\xef\xbb\xbf"):
-        raise RegistrySourceError(
-            "{} must not contain a UTF-8 BOM".format(path)
-        )
+        raise RegistrySourceError("{} must not contain a UTF-8 BOM".format(path))
     try:
-        data = json.loads(
-            raw.decode("utf-8"),
-            object_pairs_hook=reject_duplicate_keys,
-        )
+        data = json.loads(raw.decode("utf-8"), object_pairs_hook=reject_duplicate_keys)
     except RegistrySourceError:
         raise
     except (UnicodeDecodeError, TypeError, ValueError) as exc:
-        raise RegistrySourceError(
-            "{} is not valid UTF-8 JSON".format(path)
-        ) from exc
+        raise RegistrySourceError("{} is not valid UTF-8 JSON".format(path)) from exc
     if not isinstance(data, dict):
-        raise RegistrySourceError(
-            "{} root must be an object".format(path)
-        )
+        raise RegistrySourceError("{} root must be an object".format(path))
     return data
 
 
-def validate_entry(path: Path, data: Dict[str, Any]) -> Dict[str, Any]:
+def validate_entry(path: Path, data):
     if frozenset(data.keys()) != ENTRY_FIELDS:
-        raise RegistrySourceError(
-            "{} contains invalid root fields".format(path)
-        )
+        raise RegistrySourceError("{} contains invalid root fields".format(path))
     if data["$schema"] != "../schemas/mod-entry.schema.json":
-        raise RegistrySourceError(
-            "{} has an invalid $schema path".format(path)
-        )
-    schema = data["schema"]
-    if isinstance(schema, bool) or schema != ENTRY_SCHEMA:
-        raise RegistrySourceError(
-            "{} schema must be integer 1".format(path)
-        )
+        raise RegistrySourceError("{} has an invalid $schema path".format(path))
+    if isinstance(data["schema"], bool) or data["schema"] != ENTRY_SCHEMA:
+        raise RegistrySourceError("{} schema must be integer 1".format(path))
 
     mod_id = require_string(data["mod_id"], "mod_id", 128)
     if MOD_ID_PATTERN.fullmatch(mod_id) is None:
-        raise RegistrySourceError(
-            "{} contains an invalid mod_id".format(path)
-        )
+        raise RegistrySourceError("{} contains an invalid mod_id".format(path))
     expected_filename = "{}.json".format(mod_id)
     if path.name != expected_filename:
-        raise RegistrySourceError(
-            "{} must be named {}".format(path, expected_filename)
-        )
+        raise RegistrySourceError("{} must be named {}".format(path, expected_filename))
 
-    display_name = require_string(
-        data["display_name"],
-        "display_name",
-        128,
-    )
-    creator_name = require_string(
-        data["creator_name"],
-        "creator_name",
-        128,
-    )
+    display_name = require_string(data["display_name"], "display_name", 128)
+    creator_name = require_string(data["creator_name"], "creator_name", 128)
     mod_page = validate_mod_page(data["mod_page"])
 
     maintainers = data["maintainers"]
-    if (
-        not isinstance(maintainers, list)
-        or not 1 <= len(maintainers) <= 20
-    ):
-        raise RegistrySourceError(
-            "{} maintainers must contain 1 to 20 GitHub usernames".format(
-                path
-            )
-        )
-    normalized_maintainers = []  # type: List[str]
+    if not isinstance(maintainers, list) or not 1 <= len(maintainers) <= 20:
+        raise RegistrySourceError("{} maintainers must contain 1 to 20 GitHub usernames".format(path))
     seen_maintainers = set()
+    validated_maintainers = []
     for maintainer in maintainers:
         login = require_string(maintainer, "maintainer", 39)
         if GITHUB_LOGIN_PATTERN.fullmatch(login) is None:
             raise RegistrySourceError(
-                "{} contains an invalid GitHub maintainer".format(path)
+                "{} contains an invalid or non-lowercase GitHub maintainer".format(path)
             )
-        lowered = login.lower()
-        if lowered in seen_maintainers:
-            raise RegistrySourceError(
-                "{} contains a duplicate maintainer".format(path)
-            )
-        seen_maintainers.add(lowered)
-        normalized_maintainers.append(login)
+        if login in seen_maintainers:
+            raise RegistrySourceError("{} contains a duplicate maintainer".format(path))
+        seen_maintainers.add(login)
+        validated_maintainers.append(login)
 
     source = data["source"]
-    if not isinstance(source, dict):
-        raise RegistrySourceError(
-            "{} source must be an object".format(path)
-        )
-    if frozenset(source.keys()) != SOURCE_FIELDS:
-        raise RegistrySourceError(
-            "{} source contains invalid fields".format(path)
-        )
+    if not isinstance(source, dict) or frozenset(source.keys()) != SOURCE_FIELDS:
+        raise RegistrySourceError("{} source fields are invalid".format(path))
     if source["type"] != "github_releases":
-        raise RegistrySourceError(
-            "{} source.type must be github_releases".format(path)
-        )
+        raise RegistrySourceError("{} source.type must be github_releases".format(path))
 
-    repository = require_string(
-        source["repository"],
-        "source.repository",
-        201,
-    )
-    if REPOSITORY_PATTERN.fullmatch(repository) is None:
-        raise RegistrySourceError(
-            "{} source.repository must use Owner/Repository format".format(
-                path
-            )
-        )
+    repository = require_string(source["repository"], "source.repository", 201)
+    if REPOSITORY_PATTERN.fullmatch(repository) is None or ".." in repository:
+        raise RegistrySourceError("{} source.repository must use valid Owner/Repository format".format(path))
 
-    tag_prefix = require_string(
-        source["tag_prefix"],
-        "source.tag_prefix",
-        96,
-        allow_empty=True,
-    )
+    tag_prefix = require_string(source["tag_prefix"], "source.tag_prefix", 96, allow_empty=True)
     if TAG_PREFIX_PATTERN.fullmatch(tag_prefix) is None:
         raise RegistrySourceError(
-            "{} source.tag_prefix contains unsupported characters".format(
-                path
-            )
+            "{} source.tag_prefix must be empty or start with an alphanumeric character".format(path)
         )
 
     channels = source["channels"]
-    if (
-        not isinstance(channels, list)
-        or not 1 <= len(channels) <= 2
-    ):
-        raise RegistrySourceError(
-            "{} source.channels must contain one or two channels".format(
-                path
-            )
-        )
-    normalized_channels = []  # type: List[str]
+    if not isinstance(channels, list) or not 1 <= len(channels) <= 2:
+        raise RegistrySourceError("{} source.channels must contain one or two channels".format(path))
     seen_channels = set()
     for channel in channels:
         if not isinstance(channel, str) or channel not in CHANNELS:
-            raise RegistrySourceError(
-                "{} contains an invalid release channel".format(path)
-            )
+            raise RegistrySourceError("{} contains an invalid release channel".format(path))
         if channel in seen_channels:
-            raise RegistrySourceError(
-                "{} contains a duplicate release channel".format(path)
-            )
+            raise RegistrySourceError("{} contains a duplicate release channel".format(path))
         seen_channels.add(channel)
-        normalized_channels.append(channel)
 
     return {
         "mod_id": mod_id,
         "display_name": display_name,
         "creator_name": creator_name,
         "mod_page": mod_page,
-        "maintainers": normalized_maintainers,
+        "maintainers": validated_maintainers,
         "repository": repository,
         "tag_prefix": tag_prefix,
-        "channels": normalized_channels,
+        "channels": list(channels),
         "path": str(path),
     }
 
 
-def load_entries(entries_directory: Path) -> List[Dict[str, Any]]:
+def load_entries(entries_directory: Path):
     if not entries_directory.is_dir():
-        raise RegistrySourceError(
-            "Entries directory was not found: {}".format(entries_directory)
-        )
+        raise RegistrySourceError("Entries directory was not found: {}".format(entries_directory))
     paths = sorted(entries_directory.glob("*.json"))
     if len(paths) > MAX_ENTRY_FILES:
         raise RegistrySourceError("Too many registry entry files")
-
-    entries = []  # type: List[Dict[str, Any]]
+    entries = []
     seen_mod_ids = set()
     for path in paths:
         if not path.is_file():
             continue
         entry = validate_entry(path, load_json(path))
         if entry["mod_id"] in seen_mod_ids:
-            raise RegistrySourceError(
-                "Duplicate mod_id: {}".format(entry["mod_id"])
-            )
+            raise RegistrySourceError("Duplicate mod_id: {}".format(entry["mod_id"]))
         seen_mod_ids.add(entry["mod_id"])
         entries.append(entry)
     return entries
 
 
-def github_headers(token: str = "") -> Dict[str, str]:
+def github_headers(token=""):
     headers = {
         "Accept": "application/vnd.github+json",
         "User-Agent": "Demeterio-MUC-Registry-Builder",
@@ -452,228 +287,124 @@ def github_headers(token: str = "") -> Dict[str, str]:
     return headers
 
 
-def read_json_response(request: urllib.request.Request) -> Tuple[Any, Dict[str, str]]:
-    try:
-        with urllib.request.urlopen(
-            request,
-            timeout=REQUEST_TIMEOUT_SECONDS,
-        ) as response:
-            raw = response.read()
-            headers = {
-                key.lower(): value
-                for key, value in response.headers.items()
-            }
-    except urllib.error.HTTPError:
-        raise
-    except (OSError, urllib.error.URLError) as exc:
-        raise RegistrySourceError(
-            "Unable to contact GitHub: {}".format(exc)
-        ) from exc
-
-    try:
-        return json.loads(raw.decode("utf-8")), headers
-    except (UnicodeDecodeError, TypeError, ValueError) as exc:
-        raise RegistrySourceError(
-            "GitHub returned invalid JSON"
-        ) from exc
-
-
-def request_github_json(url: str, token: str) -> Tuple[Any, Dict[str, str]]:
-    attempts = [token] if token else [""]
-    if token:
-        attempts.append("")
-
-    last_http_error = None  # type: Optional[urllib.error.HTTPError]
+def request_github_json(url, token):
+    attempts = [token, ""] if token else [""]
+    last_error = None
     for attempt_token in attempts:
-        request = urllib.request.Request(
-            url,
-            headers=github_headers(attempt_token),
-            method="GET",
-        )
+        request = urllib.request.Request(url, headers=github_headers(attempt_token), method="GET")
         try:
-            return read_json_response(request)
+            with urllib.request.urlopen(request, timeout=REQUEST_TIMEOUT_SECONDS) as response:
+                raw = response.read()
         except urllib.error.HTTPError as exc:
-            last_http_error = exc
+            last_error = exc
             if attempt_token and exc.code in (401, 403, 404):
                 continue
             detail = ""
             try:
-                detail = exc.read().decode(
-                    "utf-8",
-                    errors="replace",
-                ).strip()
+                detail = exc.read().decode("utf-8", errors="replace").strip()
             except Exception:
                 pass
             raise RegistrySourceError(
                 "GitHub API returned HTTP {} for {}{}".format(
-                    exc.code,
-                    url,
-                    ": {}".format(detail[:300]) if detail else "",
+                    exc.code, url, ": {}".format(detail[:300]) if detail else ""
                 )
             ) from exc
-
-    if last_http_error is not None:
-        raise RegistrySourceError(
-            "GitHub API returned HTTP {} for {}".format(
-                last_http_error.code,
-                url,
-            )
-        )
+        except (OSError, urllib.error.URLError) as exc:
+            raise RegistrySourceError("Unable to contact GitHub: {}".format(exc)) from exc
+        try:
+            return json.loads(raw.decode("utf-8"))
+        except (UnicodeDecodeError, TypeError, ValueError) as exc:
+            raise RegistrySourceError("GitHub returned invalid JSON") from exc
     raise RegistrySourceError(
-        "Unable to contact GitHub for {}".format(url)
+        "GitHub API returned HTTP {}".format(last_error.code if last_error else "unknown")
     )
 
 
-def fetch_releases(repository: str, token: str) -> List[Dict[str, Any]]:
+def fetch_releases(repository, token):
     owner, name = repository.split("/", 1)
-    releases = []  # type: List[Dict[str, Any]]
-
+    releases = []
     for page in range(1, MAX_RELEASE_PAGES + 1):
-        encoded_owner = urllib.parse.quote(owner, safe="")
-        encoded_name = urllib.parse.quote(name, safe="")
         url = (
-            "https://api.github.com/repos/{}/{}/releases"
-            "?per_page={}&page={}"
+            "https://api.github.com/repos/{}/{}/releases?per_page={}&page={}"
         ).format(
-            encoded_owner,
-            encoded_name,
+            urllib.parse.quote(owner, safe=""),
+            urllib.parse.quote(name, safe=""),
             RELEASES_PER_PAGE,
             page,
         )
-        data, _headers = request_github_json(url, token)
+        data = request_github_json(url, token)
         if not isinstance(data, list):
-            raise RegistrySourceError(
-                "GitHub Releases response for {} is not an array".format(
-                    repository
-                )
-            )
-
-        for item in data:
-            if isinstance(item, dict):
-                releases.append(item)
+            raise RegistrySourceError("GitHub Releases response for {} is not an array".format(repository))
+        releases.extend(item for item in data if isinstance(item, dict))
         if len(data) < RELEASES_PER_PAGE:
-            break
-    else:
-        raise RegistrySourceError(
-            "{} has more than {} retrievable releases; narrow the tag "
-            "strategy or increase the reviewed limit".format(
-                repository,
-                MAX_RELEASE_PAGES * RELEASES_PER_PAGE,
-            )
-        )
-
-    return releases
+            return releases
+    raise RegistrySourceError("{} has too many retrievable releases".format(repository))
 
 
-def release_candidate(
-    release: Dict[str, Any],
-    tag_prefix: str,
-    channel: str,
-) -> Optional[Tuple[SemVer, str, str]]:
+def release_candidate(release, tag_prefix, channel):
     if release.get("draft") is True:
         return None
-
     prerelease_flag = release.get("prerelease")
     if channel == "stable" and prerelease_flag is not False:
         return None
     if channel == "prerelease" and prerelease_flag is not True:
         return None
-
     tag_name = release.get("tag_name")
-    if not isinstance(tag_name, str):
+    if not isinstance(tag_name, str) or tag_name != tag_name.strip():
         return None
     if not tag_name.startswith(tag_prefix):
         return None
     if len(tag_name) > 128:
-        raise RegistrySourceError(
-            "Matching release tag is longer than 128 characters: {}".format(
-                tag_name
-            )
-        )
-
+        raise RegistrySourceError("Matching release tag is longer than 128 characters")
     version_text = tag_name[len(tag_prefix):]
     try:
         version = SemVer.parse(version_text)
     except RegistrySourceError:
         return None
-
     if channel == "stable" and version.prerelease:
         return None
-
     published_at = release.get("published_at")
-    if not isinstance(published_at, str):
-        published_at = ""
-
-    return version, tag_name, published_at
+    return version, tag_name, published_at if isinstance(published_at, str) else ""
 
 
-def choose_release(
-    releases: Sequence[Dict[str, Any]],
-    tag_prefix: str,
-    channel: str,
-) -> Optional[Tuple[SemVer, str, str]]:
-    best = None  # type: Optional[Tuple[SemVer, str, str]]
+def choose_release(releases, tag_prefix, channel):
+    best = None
     for release in releases:
-        candidate = release_candidate(
-            release,
-            tag_prefix,
-            channel,
-        )
+        candidate = release_candidate(release, tag_prefix, channel)
         if candidate is None:
             continue
-        if best is None:
-            best = candidate
-            continue
-        if candidate[0] > best[0]:
-            best = candidate
-            continue
-        if candidate[0] == best[0] and candidate[2] > best[2]:
+        if best is None or candidate[0] > best[0] or (
+            candidate[0] == best[0] and candidate[2] > best[2]
+        ):
             best = candidate
     return best
 
 
-def resolve_registry_entries(
-    sources: Sequence[Dict[str, Any]],
-    token: str,
-) -> Tuple[List[Dict[str, str]], List[str]]:
-    repository_cache = {}  # type: Dict[str, List[Dict[str, Any]]]
-    generated = []  # type: List[Dict[str, str]]
-    warnings = []  # type: List[str]
+def resolve_registry_entries(sources, token):
+    repository_cache = {}
+    generated = []
+    warnings = []
     checked_at = utc_now_text()
-
     for source in sources:
         repository = source["repository"]
         if repository not in repository_cache:
-            repository_cache[repository] = fetch_releases(
-                repository,
-                token,
-            )
-        releases = repository_cache[repository]
-
+            repository_cache[repository] = fetch_releases(repository, token)
         found_any = False
         for channel in source["channels"]:
             candidate = choose_release(
-                releases,
-                source["tag_prefix"],
-                channel,
+                repository_cache[repository], source["tag_prefix"], channel
             )
             if candidate is None:
                 if channel == "prerelease" and "stable" in source["channels"]:
                     warnings.append(
-                        "{} has no matching prerelease; stable remains "
-                        "available".format(source["mod_id"])
+                        "{} has no matching prerelease; stable remains available".format(source["mod_id"])
                     )
                     continue
                 raise RegistrySourceError(
-                    "{} has no matching published {} GitHub Release in {} "
-                    "using tag prefix {!r}".format(
-                        source["mod_id"],
-                        channel,
-                        repository,
-                        source["tag_prefix"],
+                    "{} has no matching published {} GitHub Release in {} using tag prefix {!r}".format(
+                        source["mod_id"], channel, repository, source["tag_prefix"]
                     )
                 )
-
             version, release_tag, _published_at = candidate
             generated.append(
                 {
@@ -684,274 +415,110 @@ def resolve_registry_entries(
                     "checked_at": checked_at,
                 }
             )
-
-            if len(generated) > MAX_GENERATED_ENTRIES:
-                raise RegistrySourceError(
-                    "Generated registry contains more than "
-                    "{} channel entries".format(
-                        MAX_GENERATED_ENTRIES
-                    )
-                )
-
             found_any = True
-
+            if len(generated) > MAX_GENERATED_ENTRIES:
+                raise RegistrySourceError("Generated registry contains too many channel entries")
         if not found_any:
-            raise RegistrySourceError(
-                "{} did not produce any registry entry".format(
-                    source["mod_id"]
-                )
-            )
-
-    generated.sort(
-        key=lambda item: (
-            item["mod_id"],
-            item["release_channel"],
-        )
-    )
+            raise RegistrySourceError("{} did not produce any registry entry".format(source["mod_id"]))
+    generated.sort(key=lambda item: (item["mod_id"], item["release_channel"]))
     return generated, warnings
 
 
-
-def github_repository_url(repository: str) -> str:
+def github_repository_url(repository):
     owner, name = repository.split("/", 1)
     return "https://github.com/{}/{}".format(
-        urllib.parse.quote(owner, safe=""),
-        urllib.parse.quote(name, safe=""),
+        urllib.parse.quote(owner, safe=""), urllib.parse.quote(name, safe="")
     )
 
 
-def github_release_url(repository: str, release_tag: str) -> str:
+def github_release_url(repository, release_tag):
     return "{}/releases/tag/{}".format(
-        github_repository_url(repository),
-        urllib.parse.quote(release_tag, safe=""),
+        github_repository_url(repository), urllib.parse.quote(release_tag, safe="")
     )
 
 
-def build_readable_registry(
-    sources: Sequence[Dict[str, Any]],
-    entries: Sequence[Dict[str, str]],
-) -> Dict[str, Any]:
-    """Build the public human-readable registry catalogue data."""
-
-    resolved = {}  # type: Dict[str, Dict[str, Dict[str, str]]]
+def build_readable_registry(sources, entries):
+    resolved = {}
     generated_at = ""
-
     for entry in entries:
-        mod_id = entry["mod_id"]
-        channel = entry["release_channel"]
-        checked_at = entry["checked_at"]
-        if checked_at > generated_at:
-            generated_at = checked_at
-
-        resolved.setdefault(mod_id, {})[channel] = {
-            "version": entry["version"],
-            "release_tag": entry["release_tag"],
-            "checked_at": checked_at,
-        }
-
+        generated_at = max(generated_at, entry["checked_at"])
+        resolved.setdefault(entry["mod_id"], {})[entry["release_channel"]] = entry
     if not generated_at:
         generated_at = utc_now_text()
-
-    mods = []  # type: List[Dict[str, Any]]
+    mods = []
     for source in sources:
-        repository = source["repository"]
         channel_entries = resolved.get(source["mod_id"], {})
-
-        def channel_data(
-            channel_name: str,
-        ) -> Optional[Dict[str, str]]:
-            item = channel_entries.get(channel_name)
+        def channel_data(name):
+            item = channel_entries.get(name)
             if item is None:
                 return None
             return {
                 "version": item["version"],
                 "release_tag": item["release_tag"],
-                "release_url": github_release_url(
-                    repository,
-                    item["release_tag"],
-                ),
+                "release_url": github_release_url(source["repository"], item["release_tag"]),
                 "checked_at": item["checked_at"],
             }
-
-        checked_values = [
-            item["checked_at"]
-            for item in channel_entries.values()
-            if item.get("checked_at")
-        ]
-
+        checked_values = [item["checked_at"] for item in channel_entries.values()]
         mods.append(
             {
                 "mod_id": source["mod_id"],
                 "display_name": source["display_name"],
                 "creator_name": source["creator_name"],
                 "mod_page": source["mod_page"],
-                "repository": repository,
-                "repository_url": github_repository_url(repository),
+                "repository": source["repository"],
+                "repository_url": github_repository_url(source["repository"]),
                 "configured_channels": list(source["channels"]),
                 "stable": channel_data("stable"),
                 "prerelease": channel_data("prerelease"),
                 "checked_at": max(checked_values) if checked_values else "",
             }
         )
-
-    mods.sort(
-        key=lambda item: (
-            item["display_name"].casefold(),
-            item["creator_name"].casefold(),
-            item["mod_id"],
-        )
-    )
-
-    return {
-        "schema": 1,
-        "generated_at": generated_at,
-        "mods": mods,
-    }
+    mods.sort(key=lambda item: (item["display_name"].casefold(), item["creator_name"].casefold(), item["mod_id"]))
+    return {"schema": 1, "generated_at": generated_at, "mods": mods}
 
 
-def write_readable_registry(
-    output: Path,
-    sources: Sequence[Dict[str, Any]],
-    entries: Sequence[Dict[str, str]],
-) -> None:
-    document = build_readable_registry(sources, entries)
-    encoded = (
-        json.dumps(
-            document,
-            ensure_ascii=False,
-            indent=2,
-        )
-        + "\n"
-    ).encode("utf-8")
-
+def write_json(output, document, compact=False):
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_bytes(encoded)
-
-
-def registry_identity(entries: Sequence[Dict[str, str]]) -> List[Tuple[str, str, str, str]]:
-    return sorted(
-        (
-            item["mod_id"],
-            item["release_channel"],
-            item["version"],
-            item["release_tag"],
-        )
-        for item in entries
-    )
-
-
-def previous_payload_if_unchanged(
-    previous_signed: Optional[Path],
-    new_entries: Sequence[Dict[str, str]],
-) -> Optional[bytes]:
-    if previous_signed is None or not previous_signed.is_file():
-        return None
-    try:
-        envelope = load_json(previous_signed)
-        payload_text = envelope.get("payload")
-        if not isinstance(payload_text, str):
-            return None
-        payload = base64.b64decode(
-            payload_text.encode("ascii"),
-            validate=True,
-        )
-        previous = json.loads(
-            payload.decode("utf-8"),
-            object_pairs_hook=reject_duplicate_keys,
-        )
-        if not isinstance(previous, dict):
-            return None
-        previous_entries = previous.get("entries")
-        if not isinstance(previous_entries, list):
-            return None
-        if registry_identity(previous_entries) != registry_identity(new_entries):
-            return None
-        return payload
-    except Exception:
-        return None
-
-def write_registry(
-    output: Path,
-    entries: Sequence[Dict[str, str]],
-    previous_signed: Optional[Path] = None,
-) -> bool:
-    previous_payload = previous_payload_if_unchanged(
-        previous_signed,
-        entries,
-    )
-    if previous_payload is not None:
-        encoded = previous_payload
-        unchanged = True
+    if compact:
+        encoded = json.dumps(document, ensure_ascii=False, separators=(",", ":")) + "\n"
     else:
-        document = {
-            "schema": REGISTRY_SCHEMA,
-            "generated_at": utc_now_text(),
-            "entries": list(entries),
-        }
-        encoded = (
-            json.dumps(
-                document,
-                ensure_ascii=False,
-                indent=2,
-            )
-            + "\n"
-        ).encode("utf-8")
-        unchanged = False
-    output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_bytes(encoded)
-    return unchanged
+        encoded = json.dumps(document, ensure_ascii=False, indent=2) + "\n"
+    with output.open("w", encoding="utf-8", newline="\n") as stream:
+        stream.write(encoded)
 
 
-def build_parser() -> argparse.ArgumentParser:
+def write_readable_registry(output, sources, entries):
+    """Write the human-readable catalogue document."""
+
+    write_json(output, build_readable_registry(sources, entries))
+
+
+def write_registry(output, entries):
+    # Always issue a fresh signed payload. Reusing old payload bytes would keep
+    # generated_at stale and would undermine the player's replay protection.
+    write_json(
+        output,
+        {"schema": REGISTRY_SCHEMA, "generated_at": utc_now_text(), "entries": list(entries)},
+    )
+
+
+def build_parser():
     parser = argparse.ArgumentParser(
-        description=(
-            "Validate reviewed MUC entry files and resolve public GitHub "
-            "Releases into one unsigned registry."
-        )
+        description="Validate reviewed MUC entry files and resolve public GitHub Releases into one fresh unsigned registry."
     )
-    parser.add_argument(
-        "--entries",
-        required=True,
-        help="Directory containing one reviewed JSON file per mod.",
-    )
-    parser.add_argument(
-        "--output",
-        required=True,
-        help="Destination for the unsigned registry JSON.",
-    )
-    parser.add_argument(
-        "--previous-signed",
-        help=(
-            "Optional current signed registry. Its exact payload is reused "
-            "when versions and release tags have not changed."
-        ),
-    )
-    parser.add_argument(
-        "--readable-output",
-        help=(
-            "Optional destination for the public human-readable registry "
-            "used by the registry catalogue page."
-        ),
-    )
+    parser.add_argument("--entries", required=True)
+    parser.add_argument("--output", required=True)
+    parser.add_argument("--readable-output")
     return parser
 
 
-def main() -> int:
+def main():
     args = build_parser().parse_args()
-    token = (
-        os.environ.get("MUC_GITHUB_API_TOKEN", "").strip()
-        or os.environ.get("GITHUB_TOKEN", "").strip()
-    )
+    token = os.environ.get("MUC_GITHUB_API_TOKEN", "").strip() or os.environ.get("GITHUB_TOKEN", "").strip()
     try:
         sources = load_entries(Path(args.entries).resolve())
         entries, warnings = resolve_registry_entries(sources, token)
-        unchanged = write_registry(
-            Path(args.output).resolve(),
-            entries,
-            Path(args.previous_signed).resolve()
-            if args.previous_signed
-            else None,
-        )
+        write_registry(Path(args.output).resolve(), entries)
         if args.readable_output:
             write_readable_registry(
                 Path(args.readable_output).resolve(),
@@ -961,23 +528,13 @@ def main() -> int:
     except RegistrySourceError as exc:
         print("ERROR: {}".format(exc), file=sys.stderr)
         return 1
-
     for warning in warnings:
         print("WARNING: {}".format(warning))
     print("Validated source files: {}".format(len(sources)))
     print("Generated registry entries: {}".format(len(entries)))
-    print(
-        "Registry payload changed: {}".format(
-            "no" if unchanged else "yes"
-        )
-    )
     print("Unsigned registry written to: {}".format(args.output))
     if args.readable_output:
-        print(
-            "Readable registry written to: {}".format(
-                args.readable_output
-            )
-        )
+        print("Readable registry written to: {}".format(args.readable_output))
     return 0
 
 
