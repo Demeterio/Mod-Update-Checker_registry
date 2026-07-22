@@ -3,6 +3,9 @@ contact_links:
   - name: Security vulnerability
     url: https://github.com/Demeterio/Mod-Update-Checker_registry/security/advisories/new
     about: Report vulnerabilities privately. Do not publish sensitive security information in an Issue or Pull Request.
-  - name: Submit or update a mod entry
-    url: https://github.com/Demeterio/Mod-Update-Checker_registry/blob/main/CONTRIBUTING.md
-    about: Entry additions and exact repository changes must be submitted through a Pull Request.
+  - name: Beginner guide — submit or update a mod
+    url: https://github.com/Demeterio/Mod-Update-Checker_registry/blob/main/CONTRIBUTING.md#browser-only-github-guide
+    about: Start here. A Pull Request can only be opened after you create and commit the registry JSON file in your fork.
+  - name: Download the MUC modder documentation
+    url: https://github.com/Demeterio/Mod-Update-Checker/releases/latest
+    about: Download the latest Release asset marked MODDER. Its PDF explains the Sims 4 package and GitHub setup.
