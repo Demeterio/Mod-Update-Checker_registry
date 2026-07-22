@@ -8,6 +8,8 @@ Once every day, this registry checks the public GitHub Releases of each register
 
 MUC does **not** download, install, import, or execute mod files.
 
+Like any network request, the registry host and normal network infrastructure may receive ordinary connection metadata such as the player's IP address, request time, and the fixed MUC User-Agent. MUC does not transmit EA account data, installed mod IDs, installed versions, save data, or gameplay information.
+
 ## Quick links
 
 | Resource | Link |
