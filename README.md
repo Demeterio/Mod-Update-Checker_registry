@@ -1,4 +1,5 @@
 <img alt="Mod Update Checker registry header" src="https://repository-images.githubusercontent.com/1306184918/eb3e1888-cea8-4378-ad22-1aff7146ae64" width="50%">
+
 # Mod Update Checker Public Registry
 
 This repository hosts the public version registry used by **Mod Update Checker for The Sims 4** (MUC).
