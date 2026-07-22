@@ -64,6 +64,18 @@ https://example.com/mod-page
 YourGitHubUsername/YourModRepository
 ```
 
+## Strict entry formatting
+
+For registry-entry changes:
+
+- [ ] I copied the current repository template instead of an old local copy.
+- [ ] No string contains accidental leading or trailing whitespace.
+- [ ] `stable` and `prerelease` use exact lowercase spelling.
+- [ ] Every username in `maintainers` is written in lowercase.
+- [ ] The entry contains no comments, trailing commas, duplicate keys, or additional fields.
+- [ ] `tag_prefix` is empty or begins with an ASCII letter or digit.
+- [ ] The filename exactly matches `<mod_id>.json`.
+
 ## Release configuration
 
 For registry-entry changes:
@@ -71,7 +83,7 @@ For registry-entry changes:
 - [ ] My GitHub repository is public.
 - [ ] At least one matching, non-draft GitHub Release is published.
 - [ ] The published Release matches the configured tag prefix.
-- [ ] Release tags contain valid semantic versions.
+- [ ] The text after the prefix is strict SemVer without another leading `v`.
 - [ ] The requested stable and/or prerelease channels are correct.
 - [ ] Draft Releases are not being used as registry versions.
 
@@ -80,7 +92,7 @@ For registry-entry changes:
 For registry-entry changes:
 
 - [ ] My mod distribution includes a valid Sims 4 MUC declaration `.package`.
-- [ ] The entry's `mod_id` exactly matches the declaration `.package`.
+- [ ] The entry's `mod_id` exactly matches the declaration package.
 - [ ] My installation instructions explain that players must separately install the MUC `.ts4script`.
 - [ ] I reviewed the PDF guide included in the latest MUC Release asset marked **MODDER**.
 
@@ -90,7 +102,7 @@ For registry-entry changes:
 
 - [ ] I am the creator, maintainer, or an authorized representative of this mod.
 - [ ] I am authorized to submit or update this registry entry.
-- [ ] The entry's `maintainers` list contains the correct GitHub account or accounts.
+- [ ] The entry's lowercase `maintainers` list contains the correct GitHub account or accounts.
 - [ ] The GitHub Releases repository is an official Release source for this mod.
 - [ ] The official mod page identifies the same mod and creator.
 
