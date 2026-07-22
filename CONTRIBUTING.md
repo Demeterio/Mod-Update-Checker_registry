@@ -6,6 +6,8 @@ This guide is written for mod creators who may be new to GitHub. You can complet
 
 The registry contains public version metadata only. It does not host mod files, install updates, collect player information, or inspect a player's Mods folder.
 
+Like any network request, the registry host and normal network infrastructure may receive ordinary connection metadata such as the player's IP address, request time, and the fixed MUC User-Agent.
+
 ## Start with the MUC modder documentation
 
 Download the [latest Mod Update Checker release](https://github.com/Demeterio/Mod-Update-Checker/releases/latest) and choose the release asset whose name contains **MODDER**.
