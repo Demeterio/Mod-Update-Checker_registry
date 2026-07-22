@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/Demeterio/Mod-Update-Checker_registry/security/advisories/new
+    about: Report vulnerabilities privately. Do not publish sensitive security information in an Issue or Pull Request.
+  - name: Submit or update a mod entry
+    url: https://github.com/Demeterio/Mod-Update-Checker_registry/blob/main/CONTRIBUTING.md
+    about: Entry additions and exact repository changes must be submitted through a Pull Request.

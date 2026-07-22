@@ -1,0 +1,58 @@
+name: Registry improvement
+description: Suggest a non-security improvement to the registry, catalogue, documentation, or contribution process.
+title: "[Improvement] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for ideas and non-security improvements.
+
+        To submit working code or an exact file change, open a Pull Request. Report vulnerabilities privately through the Security tab.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Improvement area
+      options:
+        - Public mod catalogue
+        - Registry entry format
+        - Contribution process
+        - Documentation
+        - Validation or automation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Explain the current limitation or difficulty.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed improvement
+      description: Describe how you think the registry should work instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: users
+    attributes:
+      label: Who would benefit?
+      description: Explain how this would help mod creators, players, or maintainers.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: Confirmation
+      options:
+        - label: I searched existing Issues before submitting this suggestion.
+          required: true
+        - label: This is not a security vulnerability.
+          required: true

@@ -1,13 +1,28 @@
-## Registry change
+<!--
+Use a Pull Request only when you are proposing actual file changes.
 
-### Change type
+To report incorrect registry data, a broken link, a catalogue problem, or a
+non-security suggestion without submitting a fix, open an Issue instead.
 
-* [ ] Add a new mod
-* [ ] Update an existing mod
-* [ ] Remove or disable an entry
-* [ ] Documentation or tooling only
+Never disclose a security vulnerability here. Use the private reporting
+option under Security → Advisories → Report a vulnerability.
+-->
 
-### Mod information
+## Summary
+
+Describe the exact change proposed by this Pull Request.
+
+## Change type
+
+- [ ] Add a new mod entry
+- [ ] Update an existing mod entry
+- [ ] Remove or disable an entry
+- [ ] Documentation or catalogue change
+- [ ] Validation, test, workflow, or tooling change
+
+## Registry entry information
+
+Complete this section for entry additions or configuration changes. Write `N/A` for documentation or tooling-only changes.
 
 **Mod name:**
 
@@ -37,38 +52,42 @@ https://example.com/mod-page
 Owner/Repository
 ```
 
-### Release configuration
+## Release configuration
 
-* [ ] The GitHub repository is public.
-* [ ] At least one matching, non-draft GitHub Release is published.
-* [ ] The published Release matches the configured tag prefix.
-* [ ] Release tags contain valid semantic versions.
-* [ ] The requested stable and/or prerelease channels are correct.
-* [ ] Draft releases are not being used as registry versions.
+For registry-entry changes:
 
-### Mod page verification
+- [ ] The GitHub repository is public.
+- [ ] At least one matching, non-draft GitHub Release is published.
+- [ ] The published Release matches the configured tag prefix.
+- [ ] Release tags contain valid semantic versions.
+- [ ] The requested stable and/or prerelease channels are correct.
+- [ ] Draft releases are not being used as registry versions.
 
-* [ ] The official mod page is publicly accessible.
-* [ ] The official mod page uses HTTPS.
-* [ ] The page identifies the same mod and creator as this registry entry.
-* [ ] The page does not contain credentials, private information, or restricted access requirements.
+## Ownership and authorization
 
-### Ownership and authorization
+For registry-entry changes:
 
-* [ ] I am the creator, maintainer, or an authorized representative of this mod.
-* [ ] I am authorized to submit or update this registry entry.
-* [ ] The entry's `maintainers` list is accurate.
-* [ ] The `mod_id` exactly matches the released Mod Update Checker declaration package.
-* [ ] The GitHub Releases repository is an official release source for this mod.
+- [ ] I am the creator, maintainer, or an authorized representative of this mod.
+- [ ] I am authorized to submit or update this registry entry.
+- [ ] The entry's `maintainers` list is accurate.
+- [ ] The `mod_id` exactly matches the released MUC declaration package.
+- [ ] The GitHub Releases repository is an official release source for this mod.
+- [ ] The official mod page identifies the same mod and creator.
 
-### Repository safety
+## Repository safety
 
-* [ ] I changed only the files required for this contribution.
-* [ ] I did not edit `generated/registry-v1.json`.
-* [ ] I did not edit or replace the public signing-key files.
-* [ ] I did not include passwords, access tokens, private keys, personal data, or private repository information.
-* [ ] I understand that passing automated checks does not guarantee acceptance.
+- [ ] I changed only the files required for this contribution.
+- [ ] I did not add `generated/registry-v1.json`.
+- [ ] I did not add `generated/registry-v1-readable.json`.
+- [ ] I did not edit or replace the public signing-key files.
+- [ ] I did not include passwords, tokens, private keys, personal data, or private repository information.
+- [ ] This Pull Request does not disclose a security vulnerability.
+- [ ] I understand that passing automated checks does not guarantee acceptance.
 
-### Additional context
+## Testing and validation
 
-Describe anything reviewers should know, including unusual tag naming, repository moves, shared repositories, release-channel behavior, maintainer changes, or differences between the official mod page and the GitHub Releases repository.
+Describe any local tests performed, or write `Validation workflow only`.
+
+## Additional context
+
+Include unusual tag naming, repository moves, shared repositories, release-channel behavior, maintainer changes, or anything else reviewers should know.
