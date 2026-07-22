@@ -2,35 +2,33 @@
 
 Thank you for helping maintain the public Mod Update Checker registry.
 
-This guide is written for mod creators who may be new to GitHub. You can complete the entire registry submission through a web browser; installing Git or Visual Studio Code is not required.
+This guide is written for mod creators who may be new to GitHub. The entire registry submission can be completed through a web browser; Git and Visual Studio Code are not required.
 
 The registry contains public version metadata only. It does not host mod files, install updates, collect player information, or inspect a player's Mods folder.
 
-Like any network request, the registry host and normal network infrastructure may receive ordinary connection metadata such as the player's IP address, request time, and the fixed MUC User-Agent.
-
 ## Start with the MUC modder documentation
 
-Download the [latest Mod Update Checker release](https://github.com/Demeterio/Mod-Update-Checker/releases/latest) and choose the release asset whose name contains **MODDER**.
+Download the [latest Mod Update Checker release](https://github.com/Demeterio/Mod-Update-Checker/releases/latest) and choose the Release asset whose name contains **MODDER**.
 
 The PDF documentation inside that ZIP explains how to:
 
 - create the required The Sims 4 declaration `.package`;
-- choose the mod ID and installed version;
+- choose the permanent mod ID and installed version;
 - choose the stable or prerelease channel;
-- create a public GitHub repository for your mod;
+- create a public GitHub repository for the mod;
 - publish mod versions with GitHub Releases;
-- prepare and submit your registry entry.
+- prepare and submit the registry entry.
 
-This `CONTRIBUTING.md` file focuses on submitting the registry JSON after the Sims 4 package and GitHub Release setup are ready.
+This `CONTRIBUTING.md` file focuses on the registry JSON submission after the Sims 4 package and GitHub Release setup are ready.
 
-## Choose the correct channel
+## Choose the correct GitHub feature
 
 ### Open an Issue when you want to
 
 - report an incorrect displayed version;
-- report a broken official-page or release link;
+- report a broken official-page or Release link;
 - report a missing, duplicate, or incorrectly named entry;
-- report a problem with the public catalogue;
+- report a public catalogue problem;
 - report a documentation problem;
 - suggest a non-security improvement;
 - ask for clarification before preparing a contribution.
@@ -52,28 +50,26 @@ A Pull Request proposes actual file changes and is subject to automated validati
 
 Report vulnerabilities privately through **Security → Advisories → Report a vulnerability**.
 
-Do not disclose private keys, tokens, signing weaknesses, validation bypasses, or other sensitive security information in a public Issue or Pull Request.
+Do not disclose private keys, tokens, signing weaknesses, validation bypasses, or other sensitive information in a public Issue or Pull Request.
 
 ## Before submitting a mod entry
 
 Your own The Sims 4 mod ZIP must already include a valid **Mod Update Checker declaration `.package` file**, or provide that declaration through a clearly identified optional MUC integration download.
 
-The declaration `.package` is a small Sims 4 tuning package created by the mod author. It tells MUC the mod ID, installed version, release channel, and other integration information.
+The declaration package tells MUC the mod ID, installed version, release channel, display name, and official player-facing update page.
 
-A player who installs this declaration `.package` must also separately install the current **Mod Update Checker `.ts4script`** in their Sims 4 Mods folder. The MUC `.ts4script` is installed by the player and is not automatically included in third-party mods.
+A player who installs this declaration package must separately install the current **Mod Update Checker `.ts4script`**. Third-party creators should not silently bundle the MUC script mod.
 
-Without the MUC `.ts4script`, the custom tuning class used by the declaration package is unavailable and the declaration may generate tuning-loading errors. Mod creators should therefore explain this requirement clearly in their installation instructions.
-
-A valid declaration may be released before its central registry entry is accepted. In that case, MUC reports that the central entry is missing and skips the version comparison without affecting normal gameplay.
+A valid declaration may be released before its public registry entry is accepted. MUC then reports that the mod is not currently listed, preserves any last known registry information, skips the current comparison, and continues normal gameplay.
 
 You will need:
 
-- the exact `mod_id` declared in your Sims 4 `.package`;
-- your own public GitHub repository containing your mod's published Releases;
-- a public official HTTPS page describing your mod;
-- at least one published, non-draft GitHub Release matching the intended tag prefix and release channel;
-- Release tags containing valid semantic versions;
-- authorization from the creator or maintainer to submit or maintain the entry;
+- the exact `mod_id` declared in the Sims 4 package;
+- a public GitHub repository containing published Releases;
+- a public official HTTPS page describing the mod;
+- at least one published, non-draft GitHub Release matching the intended prefix and channel;
+- Release tags containing valid SemVer after the prefix;
+- authorization from the creator or maintainer;
 - a GitHub account used to create the fork and Pull Request.
 
 Git tags without a published GitHub Release are not sufficient.
@@ -84,9 +80,9 @@ This is the recommended method for beginners.
 
 ### Step 1 — Sign in to GitHub
 
-Create or sign in to the GitHub account that will maintain the registry entry.
+Create or sign in to the GitHub account that will maintain the entry.
 
-The username of this account will normally be listed in the entry's `maintainers` field.
+The username of this account will normally be listed in `maintainers`, written in lowercase in the JSON file.
 
 ### Step 2 — Fork the registry
 
@@ -95,27 +91,41 @@ The username of this account will normally be listed in the entry's `maintainers
 3. Keep the suggested repository name.
 4. Click **Create fork**.
 
-GitHub creates a personal copy of the registry under your own account. You will edit your fork, not Demeterio's `main` branch.
+GitHub creates a personal copy under your account. Edit your fork, not Demeterio's `main` branch.
 
 ### Step 3 — Create the entry file in your fork
 
 1. In your fork, open the `entries` folder.
 2. Click **Add file**.
 3. Choose **Create new file**.
-4. In the filename field, enter your complete filename:
+4. Enter the complete filename:
 
 ```text
 yourcreatorname.yourmodname.0123456789ABCDEF.json
 ```
 
-5. Open the [entry template](https://github.com/Demeterio/Mod-Update-Checker_registry/blob/main/templates/mod-entry.template.json) in another tab.
+5. Open the current [entry template](https://github.com/Demeterio/Mod-Update-Checker_registry/blob/main/templates/mod-entry.template.json) in another tab.
 6. Copy the complete JSON template.
 7. Paste it into the new file editor.
-8. Replace every placeholder with your real information.
+8. Replace every placeholder with real information.
 
-The filename must be exactly the same as your `mod_id`, followed by `.json`.
+The filename must be exactly the same as `mod_id`, followed by `.json`.
 
-### Step 4 — Commit the change
+### Step 4 — Check strict formatting before committing
+
+The validator does not repair data. It rejects malformed values so that errors are visible to the contributor.
+
+Check that:
+
+- no string begins or ends with an accidental space;
+- `stable` and `prerelease` use exact lowercase spelling;
+- every `maintainers` username is lowercase;
+- `tag_prefix` is empty or begins with a letter or digit;
+- `mod_id` uses lowercase creator/mod segments and a 16-character uppercase hexadecimal suffix;
+- no field has been added or removed;
+- the JSON has no comments, trailing commas, or duplicate keys.
+
+### Step 5 — Commit the change
 
 1. Click **Commit changes**.
 2. Use a short message such as:
@@ -125,27 +135,18 @@ Add My Mod registry entry
 ```
 
 3. When GitHub offers the choice, select **Create a new branch for this commit and start a pull request**.
-4. Give the branch a simple name, for example:
-
-```text
-add-my-mod
-```
-
+4. Give the branch a simple name, such as `add-my-mod`.
 5. Confirm the commit.
 
-If GitHub commits directly to your fork's `main` branch instead, that is still workable. Return to the main page of your fork and continue with the next step.
+If GitHub commits directly to your fork's `main`, that is still workable.
 
-### Step 5 — Open the Pull Request
+### Step 6 — Open the Pull Request
 
-After the commit, GitHub normally displays a yellow banner with **Compare & pull request**.
+After the commit, GitHub normally displays **Compare & pull request**.
 
-You can also:
+You can also open the fork's main page and click **Contribute → Open pull request**.
 
-1. open the main page of your fork;
-2. click **Contribute**;
-3. click **Open pull request**.
-
-On the comparison page, verify:
+Verify the comparison:
 
 ```text
 base repository: Demeterio/Mod-Update-Checker_registry
@@ -154,45 +155,30 @@ head repository: your GitHub fork
 compare branch: the branch containing your entry
 ```
 
-GitHub should display your new JSON file as a change.
+GitHub should display the new JSON file as a change.
 
-If GitHub says **There is nothing to compare**, return to your fork and verify that:
+If GitHub says **There is nothing to compare**, return to the fork and verify that the file exists, the change was committed, the correct compare branch is selected, and the base repository and branch are correct.
 
-- the JSON file exists in your fork;
-- the change was committed;
-- the correct compare branch is selected;
-- the base repository is Demeterio's registry;
-- the base branch is `main`.
-
-### Step 6 — Complete the Pull Request form
+### Step 7 — Complete the Pull Request form
 
 The repository automatically inserts a Pull Request template.
 
-Complete the requested mod information and check each applicable confirmation box. You can edit the title and description before clicking **Create pull request**.
+Complete the requested mod information and check every applicable confirmation box. A Draft Pull Request can be created after the first committed difference when you want to provide context before the entry is final.
 
-A Pull Request cannot be created before there is a committed difference between branches. However, after the first commit you may create a **Draft Pull Request** if you want to provide information early and continue working before requesting final review.
-
-For a normal single-entry submission, it is usually simpler to finish the JSON first and then create a regular Pull Request.
-
-### Step 7 — Validation and review
+### Step 8 — Validation and review
 
 After the Pull Request is created:
 
-1. GitHub waits for Demeterio to approve the external workflow run.
-2. The `validate` workflow checks your JSON and your public GitHub Releases.
-3. Demeterio reviews the submitted files and public mod information.
-4. You may be asked to correct the entry.
-5. The Pull Request is merged only after validation and maintainer approval.
-
-Never merge or close the Pull Request yourself unless you are the registry maintainer.
+1. GitHub may wait for Demeterio to approve the external workflow run.
+2. The validation workflow checks the JSON and public GitHub Releases.
+3. The workflow creates and verifies a test signature with an ephemeral key; it never receives the production key.
+4. Demeterio reviews the submitted files and public mod information.
+5. You may be asked to correct the entry.
+6. The Pull Request is merged only after validation and maintainer approval.
 
 ## File location
 
-Each mod uses one JSON source file in the `entries/` directory.
-
-The filename must be the exact Mod Update Checker ID followed by `.json`.
-
-Example:
+Each mod uses one JSON source file in `entries/`.
 
 ```text
 entries/moddername.modname.F693BA10FC031D74.json
@@ -211,7 +197,7 @@ Do not place multiple mods in one file.
   "creator_name": "Modder Name",
   "mod_page": "https://example.com/mod-name",
   "maintainers": [
-    "YourGitHubUsername"
+    "yourgithubusername"
   ],
   "source": {
     "type": "github_releases",
@@ -232,7 +218,7 @@ generated/registry-v1.json
 generated/registry-v1-readable.json
 ```
 
-Do not edit or replace:
+Do not edit or replace signing material:
 
 ```text
 security/muc-registry-public-key.pem
@@ -241,117 +227,121 @@ security/muc-registry-public-key.sha256
 
 The signed registry, readable registry, and catalogue are rebuilt and deployed automatically after an accepted change reaches `main`.
 
-## Field reference
+## Strict validation rules
+
+The schema helps editors identify basic mistakes. The Python builder remains the final authority for URL parsing, public-host checks, Release resolution, and other semantic rules.
+
+The builder rejects values rather than trimming, lowercasing, or otherwise changing them.
+
+### Exact strings
+
+These are invalid:
+
+```text
+" Mod Name"
+"Mod Name "
+"Stable"
+" prerelease"
+"examplecreator "
+```
+
+Correct the source file instead of expecting the workflow to normalize it.
 
 ### `mod_id`
 
-This must exactly match the identifier declared by your mod's MUC integration `.package`.
-
-Accepted format:
+The value must exactly match the identifier declared by the MUC integration package.
 
 ```text
 moddername.modname.F693BA10FC031D74
 ```
 
-The creator and mod-name segments use lowercase ASCII letters, digits, underscores, or hyphens. The final section is exactly 16 uppercase hexadecimal characters.
+The first two segments accept lowercase ASCII letters, digits, underscores, and hyphens. The final segment is exactly 16 uppercase hexadecimal characters.
 
-Changing a published `mod_id` creates a different registry identity and breaks continuity for installed declarations.
+The filename must be exactly:
+
+```text
+<mod_id>.json
+```
+
+Changing a published `mod_id` creates a different registry identity and breaks continuity.
 
 ### `display_name`
 
-The public name of your mod.
+The public mod name used in the readable catalogue.
 
-It is included in the human-readable catalogue but not in the signed player registry downloaded by MUC.
+Rules:
+
+- 1 to 128 characters;
+- no leading or trailing whitespace;
+- no control characters or line breaks.
 
 ### `creator_name`
 
-Your public creator or team name.
+The public creator or team name used in the readable catalogue.
 
-It is included in the human-readable catalogue but not in the signed player registry.
+It follows the same whitespace and control-character restrictions as `display_name`.
 
 ### `mod_page`
 
-The official public page describing your mod.
+The official public page describing the mod.
 
-It may be:
-
-- your official creator website;
-- your public Mod The Sims or similar platform listing;
-- your public project page;
-- your public GitHub repository presentation page.
-
-The URL must:
+It must:
 
 - use HTTPS;
-- be publicly accessible;
-- identify the same mod and creator;
-- not contain embedded credentials.
+- include a public hostname;
+- contain no whitespace;
+- contain no embedded username or password;
+- not use `localhost` or a `.local` hostname.
 
-The page is included as a link in the human-readable catalogue. It is not included in the signed player registry, is never opened by MUC, and is not fetched by the registry workflow.
+The page is used only by the human-readable catalogue and review process. It is not included in the signed player registry and is never fetched by MUC.
 
 ### `maintainers`
 
-Enter the GitHub username or usernames authorized to maintain this registry entry.
+List the GitHub usernames authorized to maintain the entry.
 
-For an initial submission, this is normally **your own GitHub account name—the same account used to fork the repository and open the Pull Request**.
+Registry usernames must be written in lowercase, even when a profile is commonly displayed with capitalization. GitHub usernames are treated case-insensitively, while the registry uses one canonical lowercase representation so `uniqueItems` and the Python builder enforce the same contract.
 
-For example, if your GitHub profile is:
-
-```text
-https://github.com/ExampleCreator
-```
-
-use:
+Example:
 
 ```json
 "maintainers": [
-  "ExampleCreator"
+  "examplecreator"
 ]
 ```
 
-Organization-owned projects may list the GitHub accounts of the people responsible for the mod's Releases.
+Rules:
 
-Changing the maintainers of an existing entry requires manual review.
+- 1 to 20 usernames;
+- lowercase ASCII letters, digits, and hyphens only;
+- no leading or trailing hyphen;
+- no duplicates;
+- no leading or trailing whitespace.
+
+Changing maintainers requires manual review.
 
 ### `source.type`
 
-The only currently supported source is:
+The only supported value is:
 
 ```json
 "github_releases"
 ```
 
-The registry workflow contacts GitHub's public Releases API for the repository named in `source.repository`. In other words, it checks **your mod's public GitHub Releases**.
-
-The Sims 4 game and the MUC script mod do not contact your GitHub repository directly. The central registry workflow performs that check and publishes the resolved version in the signed registry.
-
 ### `source.repository`
 
-Enter **your mod's public GitHub repository** in `Owner/Repository` form.
-
-- `Owner` is your GitHub username or organization name.
-- `Repository` is the name of your mod repository.
-
-Example profile and repository:
-
-```text
-GitHub account: ExampleCreator
-Repository name: ExampleMod
-```
-
-Registry value:
+Enter the public mod repository in `Owner/Repository` form:
 
 ```json
 "repository": "ExampleCreator/ExampleMod"
 ```
 
-Do not enter the complete URL. Arbitrary hosts and API endpoints are not accepted.
+Do not enter a complete URL. Private repositories are not supported.
 
-Private repositories are not supported.
+The schema and builder reject missing segments, leading or trailing punctuation, consecutive dots, whitespace, arbitrary URLs, and additional path components.
 
 ### `source.tag_prefix`
 
-The exact text placed before the semantic version in your GitHub Release tags.
+This is the exact text placed before the SemVer portion of each Release tag.
 
 | Release tag | `tag_prefix` | Extracted version |
 | --- | --- | --- |
@@ -359,47 +349,40 @@ The exact text placed before the semantic version in your GitHub Release tags.
 | `1.2.0` | empty string | `1.2.0` |
 | `example-mod-v1.2.0` | `example-mod-v` | `1.2.0` |
 
-This allows multiple mods to share one GitHub repository when each mod uses a different tag prefix.
+The prefix may be empty. A non-empty prefix must begin with an ASCII letter or digit and may then contain letters, digits, dots, underscores, slashes, plus signs, or hyphens.
 
-The text after the prefix must be valid SemVer.
+These examples are rejected:
+
+```text
+/release-
+-version-
+ prefix
+```
+
+The text after the prefix must be strict SemVer and must not begin with another `v` unless that `v` is part of the configured prefix.
 
 ### `source.channels`
 
-Accepted values:
+Accepted values are exactly:
 
 ```text
 stable
 prerelease
 ```
 
-A stable entry is generated from the highest matching published GitHub Release where:
+The values are case-sensitive. `Stable`, `Prerelease`, and values containing spaces are rejected.
 
-- `draft` is `false`;
-- `prerelease` is `false`;
-- the tag matches `tag_prefix`;
-- the extracted version is valid SemVer;
-- the extracted version is not itself a prerelease version.
+A stable entry is generated from the highest matching published non-draft Release where GitHub's `prerelease` flag is false and the extracted SemVer is not a prerelease.
 
-A prerelease entry is generated from the highest matching published GitHub Release where:
+A prerelease entry is generated from the highest matching published non-draft Release where GitHub's `prerelease` flag is true.
 
-- `draft` is `false`;
-- `prerelease` is `true`;
-- the tag matches `tag_prefix`;
-- the extracted version is valid SemVer.
+Mods installed on the `stable` channel use only the stable entry. Mods installed on the `prerelease` channel may use either the stable or prerelease entry; MUC selects the highest allowed version.
 
-Mods installed on the `stable` channel use only the stable registry entry.
-
-Mods installed on the `prerelease` channel may use either the stable or prerelease entry. MUC selects the highest allowed version.
-
-If `prerelease` is requested but no matching prerelease currently exists, the build omits that channel and continues when a stable release exists.
+If prerelease is configured but no matching prerelease currently exists, the build may omit that channel and continue when a stable Release exists.
 
 ## Release requirements
 
-A release must be published through the **Releases** section of your public GitHub repository.
-
-The central registry checks each registered creator's Releases every day. Most future mod versions therefore require no new registry Pull Request.
-
-The workflow reads Release metadata only. It does not download or execute Release assets.
+A Release must be published through the **Releases** section of the public GitHub repository. A Git tag by itself is not enough.
 
 Recommended tags:
 
@@ -411,41 +394,44 @@ v2.0.0-rc.1
 
 Avoid changing or deleting a published Release tag after it has entered the registry.
 
+The workflow reads Release metadata only. It does not download or execute Release assets.
+
 ## Updating an existing entry
 
-Most new versions require no registry Pull Request.
+Most new versions require no registry Pull Request. Publish a matching GitHub Release in the configured repository and the scheduled workflow will rebuild the registry.
 
-Publish a matching GitHub Release in your configured repository. The scheduled registry workflow detects it, rebuilds the signed registry and readable catalogue, and republishes the site.
+A new Pull Request is required when changing:
 
-A new Pull Request is required only when changing entry configuration, such as:
-
-- your GitHub repository;
-- your tag prefix;
+- the public GitHub repository;
+- the tag prefix;
 - supported Release channels;
 - maintainers;
 - the official mod page;
-- the public creator or mod name.
+- the public creator or mod name;
+- the permanent mod ID.
 
 ## Automated validation
 
-Pull Requests are checked automatically.
+Pull Request validation includes:
 
-Validation includes:
-
-- Python syntax and unit tests;
-- valid UTF-8 JSON;
-- no duplicate JSON keys;
-- exact root-field validation;
+- Python compilation and unit tests;
+- strict UTF-8 JSON parsing;
+- rejection of duplicate JSON keys;
+- exact root and nested field validation;
+- exact whitespace and case validation;
+- schema and Python-builder contract tests;
 - exact filename and `mod_id` matching;
 - duplicate `mod_id` detection;
-- official-page HTTPS validation;
+- HTTPS official-page validation;
 - public GitHub repository format;
 - matching published GitHub Releases;
-- valid semantic versions;
+- strict SemVer validation;
 - stable and prerelease channel selection;
-- generation of the signed-registry payload;
-- generation of the human-readable registry;
-- test signing with an ephemeral RSA key.
+- generation of a fresh unsigned registry;
+- canonical payload validation;
+- test signing with an ephemeral RSA key;
+- independent verification of the completed signed envelope;
+- generation of the human-readable registry.
 
 Pull Request workflows never receive the private production signing key.
 
@@ -453,19 +439,16 @@ Pull Request workflows never receive the private production signing key.
 
 Passing automation does not guarantee acceptance.
 
-Every external Pull Request and every update to an existing entry requires maintainer review before it can be merged.
-
 The maintainer may verify:
 
 - that the submitter is connected to the mod;
-- that the `mod_id` matches the released declaration `.package`;
+- that `mod_id` matches the released declaration package;
 - that the official page identifies the same mod and creator;
 - that the repository and Release tags are official;
+- that the lowercase `maintainers` list represents authorized accounts;
 - that no generated or security-sensitive file was added or modified;
 - that the entry does not impersonate another creator.
 
 ## Security reports
 
-Do not disclose a security vulnerability in a public Issue or Pull Request.
-
-Use the private vulnerability reporting feature described in `SECURITY.md`.
+Do not disclose a security vulnerability in a public Issue or Pull Request. Use the private vulnerability reporting feature described in `SECURITY.md`.

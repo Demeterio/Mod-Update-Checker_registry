@@ -6,7 +6,7 @@
   "creator_name": "Modder Name",
   "mod_page": "https://example.com/mod-name",
   "maintainers": [
-    "ExampleGitHubUser"
+    "examplegithubuser"
   ],
   "source": {
     "type": "github_releases",
