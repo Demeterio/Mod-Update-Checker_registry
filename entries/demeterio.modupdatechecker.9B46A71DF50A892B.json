@@ -1,0 +1,19 @@
+{
+  "$schema": "../schemas/mod-entry.schema.json",
+  "schema": 1,
+  "mod_id": "demeterio.modupdatechecker.9B46A71DF50A892B",
+  "display_name": "Mod Update Checker",
+  "creator_name": "Demeterio",
+  "mod_page": "https://github.com/Demeterio/Mod-Update-Checker",
+  "maintainers": [
+    "demeterio"
+  ],
+  "source": {
+    "type": "github_releases",
+    "repository": "Demeterio/Mod-Update-Checker",
+    "tag_prefix": "v",
+    "channels": [
+      "stable"
+    ]
+  }
+}
