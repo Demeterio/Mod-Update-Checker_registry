@@ -1,6 +1,5 @@
 exclude:
   - entries
-  - source
   - tools
   - tests
   - .github

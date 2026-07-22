@@ -221,8 +221,8 @@ permalink: /registry/
 </head>
 <body>
   <main class="page">
-    <span class="eyebrow">The Sims 4 · Mod Update Checker (MUC) · by Demeterio</span>
-    <h1>MUC Registry</h1>
+    <span class="eyebrow">The Sims 4 · Mod Update Checker (MUC) · Demeterio</span>
+    <h1>Mod Update Checker Registry by Demeterio</h1>
     <p class="intro">
       Browse registered mods, official pages, and the latest stable and
       prerelease versions detected from their public GitHub Releases.
@@ -241,13 +241,13 @@ permalink: /registry/
     </section>
 
     <div class="controls">
-      <input id="search" type="search" placeholder="Search mod, creator, ID, or repository…">
-      <select id="channel">
+      <input id="search" type="search" aria-label="Search registry" placeholder="Search mod, creator, ID, or repository…">
+      <select id="channel" aria-label="Filter by release channel">
         <option value="all">All channels</option>
         <option value="stable">Has stable release</option>
         <option value="prerelease">Has prerelease</option>
       </select>
-      <select id="sort">
+      <select id="sort" aria-label="Sort registry">
         <option value="name">Sort by mod name</option>
         <option value="creator">Sort by creator</option>
         <option value="checked">Sort by last checked</option>
@@ -259,12 +259,12 @@ permalink: /registry/
         <table>
           <thead>
             <tr>
-              <th>Mod</th>
-              <th>Creator</th>
-              <th>Stable</th>
-              <th>Prerelease</th>
-              <th>Last checked</th>
-              <th>Links</th>
+              <th scope="col">Mod</th>
+              <th scope="col">Creator</th>
+              <th scope="col">Stable</th>
+              <th scope="col">Prerelease</th>
+              <th scope="col">Last checked</th>
+              <th scope="col">Links</th>
             </tr>
           </thead>
           <tbody id="rows">
@@ -276,14 +276,12 @@ permalink: /registry/
 
     <footer>
       <span id="visible">Loading…</span>
-    
+
       <span class="footer-links">
         <a href="../generated/registry-v1-readable.json">
           View readable JSON
         </a>
-    
         <span aria-hidden="true">·</span>
-    
         <a
           href="https://demeterio.tumblr.com/"
           target="_blank"
@@ -291,9 +289,7 @@ permalink: /registry/
         >
           Demeterio on Tumblr
         </a>
-    
         <span aria-hidden="true">·</span>
-    
         <a
           href="https://github.com/Demeterio"
           target="_blank"
@@ -348,6 +344,37 @@ permalink: /registry/
         return node;
       }
       return link(item.version, item.release_url, `version ${className}`);
+    }
+
+    function legacyCopyText(text) {
+      const temporary = document.createElement("textarea");
+      temporary.value = text;
+      temporary.setAttribute("readonly", "");
+      temporary.style.position = "fixed";
+      temporary.style.opacity = "0";
+      document.body.append(temporary);
+      temporary.select();
+
+      let copied = false;
+      try {
+        copied = document.execCommand("copy");
+      } finally {
+        temporary.remove();
+      }
+      return copied;
+    }
+
+    async function copyText(text) {
+      if (
+        window.isSecureContext &&
+        navigator.clipboard &&
+        typeof navigator.clipboard.writeText === "function"
+      ) {
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+
+      return legacyCopyText(text);
     }
 
     function render() {
@@ -433,7 +460,10 @@ permalink: /registry/
         copy.textContent = "Copy mod ID";
         copy.addEventListener("click", async () => {
           try {
-            await navigator.clipboard.writeText(mod.mod_id);
+            const copied = await copyText(mod.mod_id);
+            if (!copied) {
+              throw new Error("Copy command was rejected");
+            }
             copy.textContent = "Copied!";
             setTimeout(() => { copy.textContent = "Copy mod ID"; }, 1200);
           } catch {

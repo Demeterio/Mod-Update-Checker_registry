@@ -48,6 +48,7 @@ ENTRY_FIELDS = frozenset(
         "mod_id",
         "display_name",
         "creator_name",
+        "mod_page",
         "maintainers",
         "source",
     )
@@ -198,6 +199,51 @@ def require_string(
     return value
 
 
+def validate_mod_page(value: object) -> str:
+    """Validate a public HTTPS page used by the readable catalogue."""
+
+    mod_page = require_string(value, "mod_page", 2048)
+
+    if any(character.isspace() for character in mod_page):
+        raise RegistrySourceError(
+            "mod_page must not contain whitespace"
+        )
+    if not mod_page.startswith("https://"):
+        raise RegistrySourceError(
+            "mod_page must use HTTPS"
+        )
+
+    try:
+        parsed = urllib.parse.urlsplit(mod_page)
+        # Reading the port also detects malformed port declarations.
+        parsed.port
+    except ValueError as exc:
+        raise RegistrySourceError(
+            "mod_page is not a valid HTTPS URL"
+        ) from exc
+
+    if parsed.scheme != "https":
+        raise RegistrySourceError(
+            "mod_page must use HTTPS"
+        )
+    if not parsed.netloc or parsed.hostname is None:
+        raise RegistrySourceError(
+            "mod_page must include a public hostname"
+        )
+    if parsed.username is not None or parsed.password is not None:
+        raise RegistrySourceError(
+            "mod_page must not contain embedded credentials"
+        )
+
+    hostname = parsed.hostname.lower().rstrip(".")
+    if hostname == "localhost" or hostname.endswith(".local"):
+        raise RegistrySourceError(
+            "mod_page must use a public hostname"
+        )
+
+    return mod_page
+
+
 def load_json(path: Path) -> Dict[str, Any]:
     try:
         raw = path.read_bytes()
@@ -267,6 +313,7 @@ def validate_entry(path: Path, data: Dict[str, Any]) -> Dict[str, Any]:
         "creator_name",
         128,
     )
+    mod_page = validate_mod_page(data["mod_page"])
 
     maintainers = data["maintainers"]
     if (
@@ -361,6 +408,7 @@ def validate_entry(path: Path, data: Dict[str, Any]) -> Dict[str, Any]:
         "mod_id": mod_id,
         "display_name": display_name,
         "creator_name": creator_name,
+        "mod_page": mod_page,
         "maintainers": normalized_maintainers,
         "repository": repository,
         "tag_prefix": tag_prefix,
