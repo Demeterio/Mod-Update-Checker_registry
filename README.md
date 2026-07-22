@@ -1,4 +1,4 @@
-# Mod Update Checker Public Registry
+# Demeterio: Mod Update Checker Public Registry
 
 This repository hosts the public version registry used by **Mod Update Checker for The Sims 4** (MUC).
 
