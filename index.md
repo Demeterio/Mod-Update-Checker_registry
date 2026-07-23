@@ -46,7 +46,13 @@ The complete Mod Update Checker Python source is also available in the public mo
 
 MUC does not bypass privacy or security tools. A blocked registry request stops the update check without affecting normal gameplay.
 
-Compatibility testing with ModGuard and Privacy Protector is planned. Confirmed results will be published after testing.
+The current compatibility status, tested configuration notes, privacy details, and troubleshooting instructions are provided in:
+
+```text
+Demeterio_ModUpdateChecker_Compatibility_vX.txt
+```
+
+This file is included in the PLAYER and MODDER ZIP archives attached to the [latest official MUC Release](https://github.com/Demeterio/Mod-Update-Checker/releases/latest). Use the compatibility file included with the same MUC version you installed. Do not use GitHub's automatically generated Source code ZIP or TAR archives.
 
 ## Disclaimer
 
