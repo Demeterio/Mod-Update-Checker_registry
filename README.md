@@ -252,13 +252,17 @@ No detached `.sig` file is used.
 
 MUC is designed to coexist safely with privacy and security mods. It does not disable, evade, or bypass their protections.
 
-A privacy or security mod may allow the fixed registry request, ask the player for approval, or block it. When the request is blocked, MUC stops the update check and does not try another domain, port, path, or protocol.
+A privacy or security tool may allow the fixed registry request, display a warning, block the request, or prevent the detected script mod from loading. The exact behavior depends on the tool and its configuration.
+
+When a registry request is blocked, MUC stops the update check and does not try another domain, port, path, or protocol.
 
 | Mod or tool | Current status |
 | --- | --- |
-| ModGuard | Compatibility testing planned; result not yet confirmed |
-| Privacy Protector | Compatibility testing planned; result not yet confirmed |
-| Firewalls and operating-system network controls | Respected; a blocked request stops the check |
+| ModGuard | Tested with MUC. No warning, popup, or blocked action was observed during testing. |
+| Privacy Protector | Detects protected system and network functions during its startup scan and may prevent the game from loading. Add the official MUC `.ts4script` to the exception or exclusion list by following the Privacy Protector documentation. |
+| Firewalls and operating-system network controls | Respected. A blocked registry request stops the update check. |
+
+Do not disable a privacy or security tool globally just to use MUC. Review the warning and authorize only the official MUC `.ts4script` or fixed registry request when you understand and accept its behavior.
 
 ## Contributing a mod entry
 
