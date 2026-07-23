@@ -175,6 +175,9 @@ After the Pull Request is created:
 4. Demeterio reviews the submitted files and public mod information.
 5. You may be asked to correct the entry.
 6. The Pull Request is merged only after validation and maintainer approval.
+7. After the Pull Request is merged, you may optionally delete only your personal
+   fork of the MUC registry repository. Do not delete your mod's GitHub repository
+   or its Releases, because MUC still uses them for version checks.
 
 ## File location
 
