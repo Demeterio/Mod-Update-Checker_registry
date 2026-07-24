@@ -148,7 +148,7 @@ The new branch is created inside your fork. Do not merge it into your fork's `ma
 ### Step 6 — Open the Pull Request
 
 1. After the commit, return to the main page of the repository created in your GitHub account when you forked Mod Update Checker.
-2. Click **Contribute → Open pull request**
+2. Click **compare & pull request**
 3. If GitHub does not show the correct repositories, click **compare across forks**.
 4. Verify the comparison:
 
