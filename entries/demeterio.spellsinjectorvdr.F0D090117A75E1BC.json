@@ -1,0 +1,19 @@
+{
+  "$schema": "../schemas/mod-entry.schema.json",
+  "schema": 1,
+  "mod_id": "demeterio.spellsinjectorvdr.F0D090117A75E1BC",
+  "display_name": "New custom spell Vade Retro Phantasma",
+  "creator_name": "Demeterio",
+  "mod_page": "https://modthesims.info/d/668627/new-custom-spell-ghostify-and-vade-retro-phantasma.html",
+  "maintainers": [
+    "demeterio"
+  ],
+  "source": {
+    "type": "github_releases",
+    "repository": "Demeterio/Spells-Injector-VadeRetroPhantasma",
+    "tag_prefix": "v",
+    "channels": [
+      "stable"
+    ]
+  }
+}
