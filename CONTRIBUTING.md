@@ -128,36 +128,43 @@ Check that:
 ### Step 5 — Commit the change
 
 1. Click **Commit changes**.
-2. Use a short message such as:
+2. Use a short commit message, such as:
 
 ```text
 Add My Mod registry entry
 ```
 
-3. When GitHub offers the choice, select **Create a new branch for this commit and start a pull request**.
-4. Give the branch a simple name, such as `add-my-mod`.
+3. Select **Create a new branch for this commit and start a pull request**.
+4. Give the branch a simple name, such as:
+
+```text
+add-my-mod
+```
+
 5. Confirm the commit.
 
-If GitHub commits directly to your fork's `main`, that is still workable.
+The new branch is created inside your fork. Do not merge it into your fork's `main` branch.
 
 ### Step 6 — Open the Pull Request
 
-After the commit, GitHub normally displays **Compare & pull request**.
-
-You can also open the fork's main page and click **Contribute → Open pull request**.
-
-Verify the comparison:
+1. After the commit, return to the main page of the repository created in your GitHub account when you forked Mod Update Checker.
+2. Click **Contribute → Open pull request**
+3. If GitHub does not show the correct repositories, click **compare across forks**.
+4. Verify the comparison:
 
 ```text
 base repository: Demeterio/Mod-Update-Checker_registry
 base branch: main
+
 head repository: your GitHub fork
-compare branch: the branch containing your entry
+compare branch: add-my-mod
 ```
 
-GitHub should display the new JSON file as a change.
+The **base repository** is the official registry repository that will receive the change.
+The **head repository** is your fork, and the **compare branch** is the branch containing your new JSON entry.
+GitHub should display the new JSON file under **Files changed**.
 
-If GitHub says **There is nothing to compare**, return to the fork and verify that the file exists, the change was committed, the correct compare branch is selected, and the base repository and branch are correct.
+If GitHub says **There is nothing to compare**, verify that the JSON file exists in the compare branch, the change was committed, the correct compare branch is selected, the base repository is `Demeterio/Mod-Update-Checker_registry` and the base branch is `main`.
 
 ### Step 7 — Complete the Pull Request form
 
