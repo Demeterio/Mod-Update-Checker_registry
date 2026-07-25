@@ -1,0 +1,19 @@
+{
+  "$schema": "../schemas/mod-entry.schema.json",
+  "schema": 1,
+  "mod_id": "demeterio.spellsinjectorevictio.C2F0B25ACD46E08D",
+  "display_name": "New custom spell Evictio",
+  "creator_name": "Demeterio",
+  "mod_page": "https://modthesims.info/d/669035/new-custom-spell-evictio.html",
+  "maintainers": [
+    "demeterio"
+  ],
+  "source": {
+    "type": "github_releases",
+    "repository": "Demeterio/Spells-Injector-Evictio",
+    "tag_prefix": "v",
+    "channels": [
+      "stable"
+    ]
+  }
+}
