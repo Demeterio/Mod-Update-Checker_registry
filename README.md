@@ -1,4 +1,4 @@
-<a href="#"><img alt="Mod Update Checker registry header" src="https://repository-images.githubusercontent.com/1306184918/eb3e1888-cea8-4378-ad22-1aff7146ae64" width="75%"></a>
+<img alt="Mod Update Checker registry header" src="assets/social/mod_update_checker_registry_header.png" width="75%">
 
 # Demeterio: Mod Update Checker Public Registry
 
