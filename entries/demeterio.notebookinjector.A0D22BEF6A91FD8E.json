@@ -1,0 +1,19 @@
+{
+  "$schema": "../schemas/mod-entry.schema.json",
+  "schema": 1,
+  "mod_id": "demeterio.notebookinjector.A0D22BEF6A91FD8E",
+  "display_name": "Notebook Injector",
+  "creator_name": "Demeterio",
+  "mod_page": "https://github.com/Demeterio/Notebook-Injector",
+  "maintainers": [
+    "demeterio"
+  ],
+  "source": {
+    "type": "github_releases",
+    "repository": "Demeterio/Notebook-Injector",
+    "tag_prefix": "v",
+    "channels": [
+      "stable"
+    ]
+  }
+}
